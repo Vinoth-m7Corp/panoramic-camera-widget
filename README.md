@@ -4,7 +4,13 @@ The PanoramicCameraWidget is a customizable Flutter widget that integrates with 
 
 ## Getting Started
 
+### Installation on iOS
+It is necessary add the keys NSCameraUsageDescription and NSPhotoLibraryAddUsageDescription in the Info.plist file cause are required by iOS to inform the user why your app needs access to the camera and photo library.
 
+	<key>NSCameraUsageDescription</key>
+		<string>App needs permission to use the camera in order to take a panoramic</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>App needs permission to use the camera in order to take a panoramic</string>
 
 ### Constructor Parameters
 - **onCameraStopped:** A callback function that is triggered when the camera stops.

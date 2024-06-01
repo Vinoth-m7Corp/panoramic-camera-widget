@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -151,6 +152,14 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
 
   @override
   Widget build(BuildContext context) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return const UiKitView(
+        viewType: 'panoramic_view',
+        layoutDirection: TextDirection.ltr,
+        creationParams: null,
+        creationParamsCodec: StandardMessageCodec(),
+      );
+    }
     return const AndroidView(viewType: 'panoramic_view');
   }
 }

@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+		<string>App needs permission to use the camera in order to take a panoramic</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>App needs permission to use the camera in order to take a panoramic</string>
 </dict>
 </plist>
