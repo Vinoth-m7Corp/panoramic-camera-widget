@@ -13,11 +13,16 @@ A new Flutter plugin project.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Your Company' => 'email@example.com' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source_files = 'Classes/**/*.{h,m,mm,cpp}'
+  s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
   s.platform = :ios, '11.0'
+  s.vendored_libraries = 'Classes/libDMD_LITE.a'
+  s.frameworks = ['AVFoundation', 'CoreBluetooth', 'Photos', 'CoreLocation', 'CoreMotion', 'AssetsLibrary']
+  s.xcconfig = {
+    'CLANG_CXX_LIBRARY' => 'libc++',
+    'CLANG_ENABLE_MODULES' => 'YES',
+    'OTHER_LDFLAGS' => '-lc++'
+  }
 
-  # Flutter.framework does not contain a i386 slice.
-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
-  s.swift_version = '5.0'
 end
