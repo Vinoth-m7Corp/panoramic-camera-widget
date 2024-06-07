@@ -41,6 +41,7 @@
 @property (retain) NSString *firstImagePath;
 @property (retain) NSString *originalsFolderPath;
 @property (nonatomic, strong) FlutterMethodChannel *channel;
+@property (nonatomic, assign) CGRect initialFrame;
 
 @end
 
@@ -58,9 +59,10 @@ UIImageView *btnHDR = nil;
 @synthesize isRotatorConnected = _isRotatorConnected;
 @synthesize isHDROn = _isHDROn;
 
-- (instancetype)initWithMethodChannel:(FlutterMethodChannel *)channel {
+- (instancetype)initWithMethodChannel:(FlutterMethodChannel *)channel frame:(CGRect)frame {
     self = [super init];
     if (self) {
+        _initialFrame = frame;
         _channel = channel;
     }
     return self;
@@ -109,7 +111,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
                     __strong typeof(self) strongSelf = weakSelf;
                     if (strongSelf) {
                         [strongSelf startDMDSDK];
-                        strongSelf->bluetoothManager = nil; // No need to release, ARC handles it
                     }
                 });
             } else {
@@ -135,7 +136,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
         [self presentViewController:alertController animated:YES completion:nil];
     } else {
         [self startDMDSDK];
-        bluetoothManager = nil; // No need to release, ARC handles it
     }
 }
 
@@ -184,7 +184,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     _isRotatorConnected = NO;
     _isHDROn = NO;
     
-    CGRect frame = [[UIScreen mainScreen] bounds];
+    CGRect frame = _initialFrame;
     if (![[UIApplication sharedApplication] isStatusBarHidden]) {
         //frame.origin.y = [[UIApplication sharedApplication] statusBarFrame].size.height;
         //frame.size.height -= [[UIApplication sharedApplication] statusBarFrame].size.height;
@@ -203,7 +203,21 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     [Monitor instance].delegate = self;
     
     hideYinYang = NO;
-    sv = [[ShooterView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(frame), CGRectGetHeight(frame)) andYinYang:!hideYinYang andCameraControls:NO];
+    
+    // The yin yang height size depends on the device screen width
+    const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
+
+    CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
+
+
+    sv = [[ShooterView alloc] initWithFrame:shooterViewFrame andYinYang:!hideYinYang andCameraControls:NO];
+    
+    CGRect maskFrame = CGRectMake(0, yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame));
+    UIView *maskView = [[UIView alloc] initWithFrame:maskFrame];
+    maskView.backgroundColor = [UIColor blackColor];
+
+    sv.layer.mask = maskView.layer;
+    
     [[Monitor instance] setCircleDetectionCallback:lensDetectionCallback withObject:(__bridge void *)(self)];
     
     [sv setContinuousMode:self.continuousMode];
@@ -236,7 +250,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     
     [aView addSubview:sv];
 
-//    sv.alpha = 0;
     
     // It is better to use CADisplayLink, this is just for illustration purposes. Don't forget to stop the timer when done.
     if (hideYinYang) {
@@ -314,7 +327,7 @@ UILabel *label = nil;
 
 - (void)loadView
 {
-    CGRect frame = [[UIScreen mainScreen] bounds];
+    CGRect frame = _initialFrame;
     UIView *view = [[UIView alloc] initWithFrame:frame];
     
     label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, frame.size.height)];
@@ -585,7 +598,6 @@ UIView *flick=nil;
 
 - (void)shootingCompleted
 {
-	[self.view viewWithTag:TAG_CAMERAVIEW].hidden = YES; //hiding when not needed will improve viewer performance
     UIActivityIndicatorView *av = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
 	av.tag = TAG_ACTIVITYVIEW;
 	[av startAnimating];
@@ -647,7 +659,6 @@ UIView *flick=nil;
                 PHAssetCreationRequest *creationRequest = [PHAssetCreationRequest creationRequestForAssetFromImage:image];
             } completionHandler:^(BOOL success, NSError *error) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.view viewWithTag:TAG_CAMERAVIEW].hidden = NO; // Hiding when not needed will improve viewer performance
                     [self restart:nil];
                     
                     if (success) {

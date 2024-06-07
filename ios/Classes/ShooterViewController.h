@@ -19,7 +19,7 @@
 - (void)restart:(id)sender;
 - (void)stop:(id)sender;
 - (void)leaveShooter;
-- (instancetype)initWithMethodChannel:(FlutterMethodChannel *)channel;
+- (instancetype)initWithMethodChannel:(FlutterMethodChannel *)channel frame:(CGRect)frame;
 
 @end
 

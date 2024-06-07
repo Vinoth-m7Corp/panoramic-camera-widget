@@ -18,15 +18,11 @@
         _channel = channel;
 
         // Initialize and add ShooterViewController with the method channel
-        _shooterViewController = [[ShooterViewController alloc] initWithMethodChannel:_channel];
+        _shooterViewController = [[ShooterViewController alloc] initWithMethodChannel:_channel frame:frame];
         _shooterViewController.view.frame = _view.bounds;
         _shooterViewController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [_view addSubview:_shooterViewController.view];
 
-        // Ensure the ShooterViewController is properly added to the view hierarchy
-        UIViewController *rootViewController = [UIApplication sharedApplication].delegate.window.rootViewController;
-        [rootViewController addChildViewController:_shooterViewController];
-        [_shooterViewController didMoveToParentViewController:rootViewController];
     }
     return self;
 }
