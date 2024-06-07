@@ -30,70 +30,79 @@ class _MyAppState extends State<MyApp> {
           appBar: AppBar(
             title: const Text('Plugin example app'),
           ),
-          body: Column(
-            children: [
-              Text(
-                helperText,
-                style: const TextStyle(color: Colors.black),
-              ),
-              Expanded(
-                child: PanoramicCameraWidget(
-                  showGuide: true,
-                  onCameraStarted: () {
-                    debugPrint("---------------onCameraStarted---------------");
-                    setState(() {
-                      helperText = 'Tap to start';
-                      photos = 0;
-                    });
-                  },
-                  onCameraStopped: () {
-                    debugPrint("---------------onCameraStopped---------------");
-                  },
-                  onCanceledPreparingToShoot: () {
-                    debugPrint("---------------onCameraStopped---------------");
-                  },
-                  onTakingPhoto: () {
-                    setState(() {
-                      helperText = 'Tacking photo';
-                    });
-                  },
-                  onPhotoTaken: () {
-                    debugPrint("---------------onPhotoTaken---------------");
-                    photos++;
-                    if (photos <= 0) {
+          body: SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  helperText,
+                  style: const TextStyle(color: Colors.black),
+                ),
+                SizedBox(
+                  height: 630,
+                  width: 330,
+                  child: PanoramicCameraWidget(
+                    showGuide: true,
+                    onCameraStarted: () {
+                      debugPrint(
+                          "---------------onCameraStarted---------------");
                       setState(() {
                         helperText = 'Tap to start';
+                        photos = 0;
                       });
-                    } else if (photos == 1) {
+                    },
+                    onCameraStopped: () {
+                      debugPrint(
+                          "---------------onCameraStopped---------------");
+                    },
+                    onCanceledPreparingToShoot: () {
+                      debugPrint(
+                          "---------------onCameraStopped---------------");
+                    },
+                    onTakingPhoto: () {
                       setState(() {
-                        helperText = 'Rotate left or right or tap to restart';
+                        helperText = 'Tacking photo';
                       });
-                    } else {
-                      setState(() {
-                        helperText =
-                            'Tap to finish when ready or continue rotating';
-                      });
-                    }
-                  },
-                  onDeviceVerticalityChanged: (int val) {
-                    isVertical = val;
-                    if (isVertical == 1) {
-                      if (!isShootingStarted) {
+                    },
+                    onPhotoTaken: () {
+                      debugPrint("---------------onPhotoTaken---------------");
+                      photos++;
+                      if (photos <= 0) {
                         setState(() {
                           helperText = 'Tap to start';
                         });
+                      } else if (photos == 1) {
+                        setState(() {
+                          helperText = 'Rotate left or right or tap to restart';
+                        });
+                      } else {
+                        setState(() {
+                          helperText =
+                              'Tap to finish when ready or continue rotating';
+                        });
                       }
-                    } else {
-                      setState(() {
-                        helperText = 'Hold the device vertically';
-                      });
-                    }
-                    debugPrint(
-                        "---------------onDeviceVerticalityChanged: $val---------------");
-                  },
+                    },
+                    onDeviceVerticalityChanged: (int val) {
+                      isVertical = val;
+                      if (isVertical == 1) {
+                        if (!isShootingStarted) {
+                          setState(() {
+                            helperText = 'Tap to start';
+                          });
+                        }
+                      } else {
+                        setState(() {
+                          helperText = 'Hold the device vertically';
+                        });
+                      }
+                      debugPrint(
+                          "---------------onDeviceVerticalityChanged: $val---------------");
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           )),
     );
   }

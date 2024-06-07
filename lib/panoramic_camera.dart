@@ -153,11 +153,21 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return const UiKitView(
-        viewType: 'panoramic_view',
-        layoutDirection: TextDirection.ltr,
-        creationParams: null,
-        creationParamsCodec: StandardMessageCodec(),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final height = constraints.maxHeight;
+          final width = constraints.maxWidth;
+
+          return SizedBox(
+            height: height,
+            width: width,
+            child: UiKitView(
+              viewType: 'panoramic_view',
+              creationParams: {'height': height, 'width': width},
+              creationParamsCodec: const StandardMessageCodec(),
+            ),
+          );
+        },
       );
     }
     return const AndroidView(viewType: 'panoramic_view');

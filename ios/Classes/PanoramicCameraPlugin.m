@@ -5,8 +5,6 @@
 
 @implementation PanoramicCameraPlugin {
     FlutterMethodChannel *_channel;
-    UIWindow *_window;
-    ShooterViewController *_shooterViewController;
 }
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
