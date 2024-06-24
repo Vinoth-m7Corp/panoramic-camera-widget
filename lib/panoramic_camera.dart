@@ -1,55 +1,25 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:panoramic_camera/panoramic_camera_controller.dart';
+import 'package:panoramic_camera/panoramic_camera_interface.dart';
 
 typedef CameraCallback = void Function();
 typedef CameraExposureChangedCallback = void Function(String mode);
 typedef CameraGeneratingEquiCallback = void Function(String path);
 
 class PanoramicCameraWidget extends StatefulWidget {
-  final void Function()? onCameraStopped;
-  final void Function()? onCameraStarted;
-  final void Function()? onFinishClear;
-  final void Function()? onFinishRelease;
-  final void Function()? onPreparingToShoot;
-  final void Function()? onCanceledPreparingToShoot;
-  final void Function()? onTakingPhoto;
-  final void Function()? onPhotoTaken;
-  final void Function(String mode)? onExposureChanged;
-  final void Function(String path)? onFinishGeneratingEqui;
-  final void Function()? onRotatorConnected;
-  final void Function()? onRotatorDisconnected;
-  final void Function()? onStartedRotating;
-  final void Function()? onFinishedRotating;
-  final void Function(int isVertical)? onDeviceVerticalityChanged;
-  final void Function(double direction)? onDirectionUpdated;
-  final void Function(Map<String, dynamic> info)? onCompassEvent;
-  final void Function(bool finished)? onShootingCompleted;
+  final PanoramicCameraController controller;
   final int outputHeight;
   final bool showGuide;
 
   const PanoramicCameraWidget({
     super.key,
-    this.onCameraStopped,
-    this.onCameraStarted,
-    this.onFinishClear,
-    this.onFinishRelease,
-    this.onPreparingToShoot,
-    this.onCanceledPreparingToShoot,
-    this.onTakingPhoto,
-    this.onPhotoTaken,
-    this.onExposureChanged,
-    this.onFinishGeneratingEqui,
-    this.onRotatorConnected,
-    this.onRotatorDisconnected,
-    this.onStartedRotating,
-    this.onFinishedRotating,
-    this.onDeviceVerticalityChanged,
-    this.onCompassEvent,
-    this.onShootingCompleted,
-    this.onDirectionUpdated,
     this.outputHeight = 800,
     this.showGuide = true,
+    required this.controller,
   });
 
   @override
@@ -57,7 +27,8 @@ class PanoramicCameraWidget extends StatefulWidget {
 }
 
 class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver
+    implements PanoramicCameraInterface {
   static const platform = MethodChannel('panoramic_channel');
 
   @override
@@ -65,69 +36,85 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     platform.setMethodCallHandler(_handleMethod);
-
+    widget.controller.attach(this);
     platform.invokeMethod('setOutputHeight', widget.outputHeight);
     platform.invokeMethod('setShowGuide', widget.showGuide);
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted && Platform.isAndroid) {
+        await platform.invokeMethod('onResume');
+      }
+    });
+  }
+
+  @override
+  Future<void> invokeMethod(String method) async {
+    await platform.invokeMethod(method);
   }
 
   Future<void> _handleMethod(MethodCall call) async {
     switch (call.method) {
       case 'onCameraStopped':
-        widget.onCameraStopped?.call();
+        widget.controller.onCameraStopped?.call();
         break;
       case 'onCameraStarted':
-        widget.onCameraStarted?.call();
+        widget.controller.onCameraStarted?.call();
         break;
       case 'onFinishClear':
-        widget.onFinishClear?.call();
+        widget.controller.onFinishClear?.call();
         break;
       case 'onFinishRelease':
-        widget.onFinishRelease?.call();
+        widget.controller.onFinishRelease?.call();
         break;
       case 'preparingToShoot':
-        widget.onPreparingToShoot?.call();
+        widget.controller.onPreparingToShoot?.call();
         break;
       case 'canceledPreparingToShoot':
-        widget.onCanceledPreparingToShoot?.call();
+        widget.controller.onCanceledPreparingToShoot?.call();
         break;
       case 'takingPhoto':
-        widget.onTakingPhoto?.call();
+        widget.controller.onTakingPhoto?.call();
         break;
       case 'photoTaken':
-        widget.onPhotoTaken?.call();
-        break;
-      case 'stitchingCompleted':
-        widget.onFinishGeneratingEqui?.call(call.arguments);
+        widget.controller.onPhotoTaken?.call();
         break;
       case 'shootingCompleted':
-        widget.onShootingCompleted?.call(call.arguments);
+        widget.controller.onShootingCompleted?.call(call.arguments);
         break;
       case 'onDirectionUpdated':
-        widget.onDirectionUpdated?.call(call.arguments);
+        widget.controller.onDirectionUpdated?.call(call.arguments);
         break;
       case 'deviceVerticalityChanged':
-        widget.onDeviceVerticalityChanged?.call(call.arguments);
+        widget.controller.onDeviceVerticalityChanged?.call(call.arguments);
         break;
       case 'compassEvent':
-        widget.onCompassEvent?.call(Map<String, dynamic>.from(call.arguments));
+        final args = Map<String, dynamic>.from(call.arguments as Map);
+        widget.controller.onCompassEvent?.call(args);
         break;
       case 'onFinishGeneratingEqui':
-        widget.onFinishGeneratingEqui?.call(call.arguments);
+        widget.controller.onFinishGeneratingEqui?.call(call.arguments);
         break;
       case 'onExposureChanged':
-        widget.onExposureChanged?.call(call.arguments);
+        widget.controller.onExposureChanged?.call(call.arguments);
         break;
       case 'onRotatorConnected':
-        widget.onRotatorConnected?.call();
+        widget.controller.onRotatorConnected?.call();
         break;
       case 'onRotatorDisconnected':
-        widget.onRotatorDisconnected?.call();
+        widget.controller.onRotatorDisconnected?.call();
         break;
       case 'onStartedRotating':
-        widget.onStartedRotating?.call();
+        widget.controller.onStartedRotating?.call();
         break;
       case 'onFinishedRotating':
-        widget.onFinishedRotating?.call();
+        widget.controller.onFinishedRotating?.call();
+        break;
+      case 'onUpdateIndicators':
+        final args = Map<String, dynamic>.from(call.arguments as Map);
+        widget.controller.onUpdateIndicators?.call(args);
         break;
       default:
         throw MissingPluginException('not implemented');
@@ -137,6 +124,8 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    widget.controller.detach();
+    platform.setMethodCallHandler(null);
     super.dispose();
   }
 

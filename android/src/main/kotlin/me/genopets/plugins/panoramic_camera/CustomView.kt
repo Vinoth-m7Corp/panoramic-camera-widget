@@ -12,21 +12,14 @@ import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.view.*
-import android.view.View.OnClickListener
 import android.widget.FrameLayout
 import android.widget.RelativeLayout
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.dermandar.dmd_lib.CallbackInterfaceShooter
 import com.dermandar.dmd_lib.DMD_Capture
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
-
-
-// import androidx.core.app.ActivityCompat
-// import androidx.core.content.ContextCompat
-
 
 class CustomView @JvmOverloads constructor(
     context: Context,
@@ -43,7 +36,6 @@ class CustomView @JvmOverloads constructor(
     private lateinit var mDMDCapture: DMD_Capture
     private val folderName = "Panoramas"
 
-    private var mIsCameraReady = false
     private var mIsShootingStarted = false
 
     private var mPanoramaPath: String? = null
@@ -55,25 +47,20 @@ class CustomView @JvmOverloads constructor(
 
     private val mCallbackInterface: CallbackInterfaceShooter = object : CallbackInterfaceShooter {
         override fun onCameraStopped() {
-            Log.e(TAG, "DMD_Capture: onCameraStopped")
-            mIsShootingStarted = false;
-            mIsCameraReady=false;
+            mIsShootingStarted = false
+            stopTimer()
             mainHandler.post { channel.invokeMethod("onCameraStopped", null) }
         }
 
         override fun onCameraStarted() {
-            Log.e(TAG, "DMD_Capture: onCameraStarted")
-            mIsCameraReady = true
             mainHandler.post { channel.invokeMethod("onCameraStarted", null) }
         }
 
         override fun onFinishClear() {
-            Log.e(TAG, "DMD_Capture: onFinishClear")
             mainHandler.post { channel.invokeMethod("onFinishClear", null) }
         }
 
         override fun onFinishRelease() {
-            Log.e(TAG, "DMD_Capture: onFinishRelease")
             mRelativeLayout.removeView(viewGroup);
             viewGroup = null;
             mDMDCapture.startCamera(activity, logoSize, logoSize)
@@ -85,17 +72,14 @@ class CustomView @JvmOverloads constructor(
         }
 
         override fun preparingToShoot() {
-            Log.e(TAG, "DMD_Capture: preparingToShoot")
             mainHandler.post { channel.invokeMethod("preparingToShoot", null) }
         }
 
         override fun canceledPreparingToShoot() {
-            Log.e(TAG, "DMD_Capture: canceledPreparingToShoot")
             mainHandler.post { channel.invokeMethod("canceledPreparingToShoot", null) }
         }
 
         override fun takingPhoto() {
-            Log.e(TAG, "DMD_Capture: takingPhoto")
             mainHandler.post { channel.invokeMethod("takingPhoto", null) }
         }
         override fun shotTakenPreviewReady(bitmapPreview: Bitmap?) {
@@ -103,12 +87,10 @@ class CustomView @JvmOverloads constructor(
         }
         
         override fun photoTaken() {
-            Log.e(TAG, "DMD_Capture: photoTaken")
             mainHandler.post { channel.invokeMethod("photoTaken", null) }
         }
 
         override fun stitchingCompleted(info: HashMap<String?, Any?>?) {
-            Log.e(TAG, "DMD_Capture: photoTaken")
             val time = System.currentTimeMillis()
             val imgName = "img_$time.jpg"
             
@@ -124,7 +106,6 @@ class CustomView @JvmOverloads constructor(
         }
 
         override fun shootingCompleted(finished: Boolean) {
-            Log.e(TAG, "DMD_Capture: shootingCompleted")
             if(finished) {
                 mDMDCapture.stopCamera();
             }
@@ -133,24 +114,17 @@ class CustomView @JvmOverloads constructor(
         }
 
         override fun deviceVerticalityChanged(isVertical: Int) {
-            Log.e(TAG, "DMD_Capture: deviceVerticalityChanged")
             mainHandler.post { channel.invokeMethod("deviceVerticalityChanged", isVertical) }
         }
 
         override fun compassEvent(info: HashMap<String?, Any?>?) {
             mIsShootingStarted = false
-            mainHandler.post { channel.invokeMethod("compassEvent", info.toString()) }
+            mainHandler.post { channel.invokeMethod("compassEvent", info) }
         }
 
         override fun onFinishGeneratingEqui() {
-            Log.e(TAG, "DMD_Capture: onFinishGeneratingEqui")
-            Log.e(TAG, "----------Image saved to $mEquiPath")
             mIsShootingStarted = false
             mDMDCapture.startCamera(activity, logoSize, logoSize)
-            
-            Toast.makeText(activity, "Image saved to $mEquiPath", Toast.LENGTH_LONG)
-                .show()
-
             mainHandler.post { channel.invokeMethod  ("onFinishGeneratingEqui", mEquiPath) }
         }
 
@@ -166,7 +140,7 @@ class CustomView @JvmOverloads constructor(
     }
 
     init {
-        LayoutInflater.from(context).inflate(R.layout.activity_shooter, this, true)
+        LayoutInflater.from(activity).inflate(R.layout.activity_shooter, this, true)
 
         
         mRelativeLayout = RelativeLayout(activity);
@@ -174,7 +148,6 @@ class CustomView @JvmOverloads constructor(
             mRelativeLayout,
             RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         )
-        // activity.setContentView(R.layout.activity_shooter)
         mRelativeLayout = findViewById(R.id.relativeLayout);
 
         checkAndRequestPermissions()
@@ -190,7 +163,7 @@ class CustomView @JvmOverloads constructor(
          )
 
          val permissionsToRequest = permissions.filter {
-             ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+             ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
          }
 
          if (permissionsToRequest.isNotEmpty()) {
@@ -201,29 +174,19 @@ class CustomView @JvmOverloads constructor(
              )
          }
      }
-    private fun initDmdCapture() {
+     
+    fun initDmdCapture() {
         try {
             mDMDCapture = DMD_Capture()
             // Do not remove the following line, the library will necessarily try to find the name of the application if it cannot find it, it will crash. Since this is a package, it does not have an application name, so one is being set.
             activity.applicationInfo.labelRes = R.string.app_name
-            val displayRotation = getDisplayRotation(context)
-            Log.d(TAG, "Display Rotation: $displayRotation")
-            viewGroup = mDMDCapture.initShooter(activity, mCallbackInterface, displayRotation, false, false)
-            mRelativeLayout.addView(viewGroup);
-            viewGroup?.setOnClickListener(OnClickListener {
-                Log.e(TAG, "DMD_Capture: onTap")
-                if (!mIsShootingStarted) {
-                    mPanoramaPath = Environment.getExternalStorageDirectory().toString() + "/Lib_Test/"
 
-                    mIsShootingStarted = mDMDCapture.startShooting(mPanoramaPath)
-                    Log.e(TAG, mIsShootingStarted.toString())
-                } else {
-                    mDMDCapture.finishShooting()
-                    mIsShootingStarted = false
-                }
-            })
+            val displayRotation = getDisplayRotation(activity)
+
+            viewGroup = mDMDCapture.initShooter(activity, mCallbackInterface, displayRotation, false, false)
+
         } catch (e: java.lang.Exception){
-            Log.e(TAG, e.message.toString())
+            Log.e(TAG, e.printStackTrace().toString())
         }
     }
 
@@ -232,26 +195,40 @@ class CustomView @JvmOverloads constructor(
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val display = context.display
             val rotation = display?.rotation ?: Surface.ROTATION_0
-            Log.d(TAG, "API 30+ Display rotation: $rotation")
             rotation
         } else {
             @Suppress("DEPRECATION")
             val display = windowManager.defaultDisplay
             val rotation = display.rotation
-            Log.d(TAG, "Below API 30 Display rotation: $rotation")
             rotation
         }
     }
 
     fun onResume() {
+        mRelativeLayout.addView(viewGroup);
         mDMDCapture.startCamera(activity, logoSize, logoSize)
     }
 
+    fun startShooting() {
+        startTimer()
+        mPanoramaPath = Environment.getExternalStorageDirectory().toString() + "/Lib_Test/"
+        mIsShootingStarted = mDMDCapture.startShooting(mPanoramaPath)
+    }
+
+    fun finishShooting() {
+        mDMDCapture.finishShooting()
+        mIsShootingStarted = false
+    }
+
     fun onPause() {
+        if (viewGroup?.parent != null) {
+            mRelativeLayout.removeView(viewGroup)
+        }
         if (mIsShootingStarted) {
             mDMDCapture.stopShooting()
             mIsShootingStarted = false
         }
+        mDMDCapture.releaseShooter()
         mDMDCapture.stopCamera()
     }
 
@@ -261,6 +238,29 @@ class CustomView @JvmOverloads constructor(
 
     fun setShowLogo(showLogo: Boolean) {
         if(!showLogo) logoSize = 10
+    }
+
+    // All this logic is necessary to send percentage updates to the channel
+    private var timerHandler: Handler? = null
+    private var timerRunnable: Runnable? = null
+
+    private fun startTimer() {
+        timerHandler = Handler(Looper.getMainLooper())
+        timerRunnable = object : Runnable {
+            override fun run() {
+                var map = mDMDCapture.getIndicators()
+                mainHandler.post { channel.invokeMethod  ("onUpdateIndicators", map) }
+
+                timerHandler?.postDelayed(this, 100)
+            }
+        }
+        timerHandler?.post(timerRunnable!!)
+    }
+
+    private fun stopTimer() {
+        timerHandler?.removeCallbacks(timerRunnable!!)
+        timerHandler = null
+        timerRunnable = null
     }
 
 }
