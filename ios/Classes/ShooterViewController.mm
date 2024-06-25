@@ -42,6 +42,7 @@
 @property (retain) NSString *originalsFolderPath;
 @property (nonatomic, strong) FlutterMethodChannel *channel;
 @property (nonatomic, assign) CGRect initialFrame;
+@property (nonatomic, strong) NSTimer *timerInfo;
 
 @end
 
@@ -50,7 +51,6 @@
 ShooterView *sv=nil;
 UITextField* textField=nil;
 NSDictionary* settings=nil;
-NSTimer *timerInfo=nil;
 UIView *aView=nil;
 UIButton *btnSelectLens = nil;
 UIButton *ivRotatorSwitch = nil;
@@ -64,36 +64,25 @@ UIImageView *btnHDR = nil;
     if (self) {
         _initialFrame = frame;
         _channel = channel;
+        [self setupMethodChannel];
     }
     return self;
 }
 
+- (void)setupMethodChannel {
+    __weak typeof(self) weakSelf = self;
+    [_channel setMethodCallHandler:^(FlutterMethodCall *call, FlutterResult result) {
+        if ([@"startShooting" isEqualToString:call.method]) {
+            [weakSelf startShooting];
+            result(nil);
+        } else {
+            result(FlutterMethodNotImplemented);
+        }
+    }];
+}
+
 void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 {
-    ShooterViewController *slf = (__bridge ShooterViewController *)obj;
-    if(res == DMDCircleDetectionInvalidInput)
-        [slf restart:nil];
-    //printf("Lens Detection Result: %d\n", (int)res);
-    
-    NSDictionary* dict=[[Monitor instance] getCurrentLensParams];
-    
-    if(circleView) {
-        [circleView removeFromSuperview];
-        circleView = nil;
-    }
-    float cx=-[[dict objectForKey:@"cx"] floatValue], cy=[[dict objectForKey:@"cy"] floatValue], radius=[[dict objectForKey:@"radius"] floatValue];
-    if(radius) {
-        float sqh=[sv bounds].size.height*radius*2;
-        
-        circleView = [[UIView alloc] initWithFrame:CGRectMake(([sv bounds].size.width-sqh)*0.5f + ([sv bounds].size.width)*cx, ([sv bounds].size.height-sqh)*0.5f + ([sv bounds].size.height)*cy, sqh, sqh)];
-        [circleView setUserInteractionEnabled:NO];
-        circleView.alpha = 0.75;
-        circleView.layer.borderWidth = 2;
-        circleView.layer.borderColor = (res == DMDCircleDetectionGood ? [UIColor greenColor].CGColor : (res == DMDCircleDetectionBad ? [UIColor redColor].CGColor : [UIColor yellowColor].CGColor));
-        circleView.layer.cornerRadius = sqh/2.0;
-        circleView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
-        [sv addSubview:circleView];
-    }
 }
 
 - (void)checkCameraPermissions
@@ -130,7 +119,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     } else if (status == AVAuthorizationStatusDenied || status == AVAuthorizationStatusRestricted) {
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Error"
                                                                                  message:@"Camera access is required. Please enable Camera access from Settings > Privacy > Camera"
-                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleDefault handler:nil];
         [alertController addAction:okAction];
         [self presentViewController:alertController animated:YES completion:nil];
@@ -174,7 +163,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     sv = nil;
     textField = nil;
     settings = nil;
-    timerInfo = nil;
+    self.timerInfo = nil;
     aView = nil;
     btnSelectLens = nil;
     ivRotatorSwitch = nil;
@@ -185,10 +174,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     _isHDROn = NO;
     
     CGRect frame = _initialFrame;
-    if (![[UIApplication sharedApplication] isStatusBarHidden]) {
-        //frame.origin.y = [[UIApplication sharedApplication] statusBarFrame].size.height;
-        //frame.size.height -= [[UIApplication sharedApplication] statusBarFrame].size.height;
-    }
     aView = [[UIView alloc] initWithFrame:frame];
     aView.backgroundColor = [UIColor blackColor];
     [aView setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
@@ -250,33 +235,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     
     [aView addSubview:sv];
 
-    
-    // It is better to use CADisplayLink, this is just for illustration purposes. Don't forget to stop the timer when done.
-    if (hideYinYang) {
-        timerInfo = [NSTimer scheduledTimerWithTimeInterval:1
-                                                     target:self
-                                                   selector:@selector(printIndicatorValues:)
-                                                   userInfo:nil repeats:YES];
-    }
-    
-    UITapGestureRecognizer *ttgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(userTripleTapped:)];
-    [ttgr setNumberOfTapsRequired:3];
-    [sv addGestureRecognizer:ttgr];
-    
-    UITapGestureRecognizer *dtgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(userDTapped:)];
-    [dtgr setNumberOfTapsRequired:2];
-    [dtgr requireGestureRecognizerToFail:ttgr];
-    [sv addGestureRecognizer:dtgr];
-    
-    UITapGestureRecognizer *tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(userTapped:)];
-    [tgr setNumberOfTapsRequired:1];
-    [tgr requireGestureRecognizerToFail:dtgr];
-    [sv addGestureRecognizer:tgr];
-    
-    flick = [[UIView alloc] init];
-    [flick setBackgroundColor:[UIColor colorWithRed:1.0-(self.continuousMode?1.0:0.0) green:self.continuousMode?1.0:0.0 blue:0.0 alpha:0.0]];
-    [flick setUserInteractionEnabled:NO];
-    [aView addSubview:flick];
+    // [self startPrintTimer];
     
     btnSelectLens = [[UIButton alloc] init];
     [btnSelectLens.layer setMasksToBounds:YES];
@@ -329,18 +288,6 @@ UILabel *label = nil;
 {
     CGRect frame = _initialFrame;
     UIView *view = [[UIView alloc] initWithFrame:frame];
-    
-    label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, frame.size.height)];
-    [label setHidden:YES];
-    [label setText:@"Bluetooth should be turned on.\nPlease turn on Bluetooth from\nSettings > Bluetooth"];
-    [label setNumberOfLines:0];
-    [label setTextColor:[UIColor whiteColor]];
-    [label setTextAlignment:NSTextAlignmentCenter];
-    [label setLineBreakMode:NSLineBreakByWordWrapping];
-    [label sizeToFit];
-    [label setCenter:view.center];
-    
-    [view addSubview:label];
     [view setBackgroundColor:[UIColor blackColor]];
     self.view = view;
 }
@@ -412,40 +359,15 @@ UILabel *label = nil;
         [self stop:nil];
 }
 
-- (void)userDTapped:(UITapGestureRecognizer*)tgr
+- (void)startShooting
 {
-    self.started=false;
-    [self restart:nil];
-}
-
-UIView *flick=nil;
-
-- (void)userTripleTapped:(UITapGestureRecognizer*)tgr
-{
-    if(self.started)return;
-    self.continuousMode=!self.continuousMode;
-    [sv setContinuousMode:self.continuousMode];
-    [flick setFrame:CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height)];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [flick setBackgroundColor:[UIColor colorWithRed:1.0-self.continuousMode green:self.continuousMode blue:0.0 alpha:1.0]];
-        [UIView transitionWithView:flick duration:0.5 options:UIViewAnimationOptionTransitionNone animations:^{
-            [flick setBackgroundColor:[UIColor colorWithRed:1.0-self.continuousMode green:self.continuousMode blue:0.0 alpha:0.0]];
-        }completion:^(BOOL finished) {
-            
-        }];
-    });
-}
-
-- (void)printIndicatorValues:(NSTimer*)timer
-{
-	NSDictionary *ind = [[Monitor instance] getIndicators];
-	NSLog(@"%.2f    %.2f    %.2f    %@    %d",
-         [[ind objectForKey:@"roll"] doubleValue],
-         [[ind objectForKey:@"pitch"] doubleValue],
-         [[ind objectForKey:@"percentage"] doubleValue],
-         ([[ind objectForKey:@"orientation"] intValue]==-1?@"LTR":@"RTL"),// -1=LTR 1=RTL
-         [[ind objectForKey:@"fovx"] intValue]
-    );
+    self.started=!self.started;
+    if(self.started)
+        [self start:nil];
+    else if(!tookPhoto)
+        [self restart:nil];
+    else
+        [self stop:nil];
 }
 
 - (void)openLensSelector:(id)sender
@@ -528,10 +450,11 @@ UIView *flick=nil;
 
 - (void)start:(id)sender
 {
+    // [self startPrintTimer];
     if (self.isRotatorMode && !_isRotatorConnected) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil
-                                                                       message:@"Rotator disconnected!"
-                                                                preferredStyle:UIAlertControllerStyleAlert];
+        message:@"Rotator disconnected!"
+        preferredStyle:UIAlertControllerStyleAlert];
         [self presentViewController:alert animated:YES completion:nil];
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
@@ -544,11 +467,11 @@ UIView *flick=nil;
     
     tookPhoto = NO;
     self.started = [[Monitor instance] startShooting];
-    // [[Monitor instance] startShootingWithMaxFovX:180];
 }
 
 - (void)restart:(id)sender
 {
+    // [self startPrintTimer];
     [[Monitor instance] setLens:[DMDLensSelector currentLensID]];
     self.isRotatorMode = [[Monitor instance] setRotatorMode: self.isRotatorMode];
 	[[Monitor instance] restart];
@@ -556,13 +479,14 @@ UIView *flick=nil;
 }
 - (void)stop:(id)sender
 {
-    NSLog(@"finishShooting");
+    // [self stopPrintTimer];
 	[[Monitor instance] finishShooting];
     tookPhoto=NO;
     [_channel invokeMethod:@"finishShooting" arguments:nil];
 }
 - (void)leaveShooter
 {
+    // [self stopPrintTimer];
     [[Monitor instance] setDelegate:nil];
 	[[Monitor instance] stopShooting];
     [_channel invokeMethod:@"leaveShooter" arguments:nil];
@@ -570,24 +494,19 @@ UIView *flick=nil;
 
 - (void)preparingToShoot
 {
-	NSLog(@"preparingToShoot");
     [_channel invokeMethod:@"preparingToShoot" arguments:nil];
 }
 - (void)canceledPreparingToShoot
 {
-	NSLog(@"canceledPreparingToShoot");
     [_channel invokeMethod:@"canceledPreparingToShoot" arguments:nil];
 }
 - (void)takingPhoto
 {
-	//make a custom animation...
-    NSLog(@"takingPhoto");
     [_channel invokeMethod:@"takingPhoto" arguments:nil];
 }
 - (void)photoTaken
 {
     tookPhoto=YES;
-    NSLog(@"photoTaken");
     [_channel invokeMethod:@"photoTaken" arguments:nil];
 }
 
@@ -598,11 +517,13 @@ UIView *flick=nil;
 
 - (void)shootingCompleted
 {
-    UIActivityIndicatorView *av = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
-	av.tag = TAG_ACTIVITYVIEW;
-	[av startAnimating];
-	av.center = self.view.center;
-	[self.view addSubview:av];
+    if (@available(iOS 13.0, *)) {
+        UIActivityIndicatorView *av = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
+        av.tag = TAG_ACTIVITYVIEW;
+        [av startAnimating];
+        av.center = self.view.center;
+        [self.view addSubview:av];
+    }
     [_channel invokeMethod:@"shootingCompleted" arguments:nil];
 }
 
@@ -637,11 +558,9 @@ UIView *flick=nil;
 }
 
 - (void)stitchingCompleted:(NSDictionary*)dict
-{
-    NSLog(@"fovx %d", [(NSNumber*)[dict objectForKey:@"fovx"] intValue]);
-    
+{    
     NSString *docsDir = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *equiPath = nil; //[docsDir stringByAppendingPathComponent:@"equi.jpg"];
+    NSString *equiPath = nil;
     
     int ch = [DMDLensSelector currentLensID] == kLensNone ? 800 : 512;
     equiPath = [docsDir stringByAppendingPathComponent:@"equi_z_n_both.jpg"];
@@ -662,13 +581,7 @@ UIView *flick=nil;
                     [self restart:nil];
                     
                     if (success) {
-                        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Information"
-                                                                                       message:@"Equi image saved to your camera roll"
-                                                                                preferredStyle:UIAlertControllerStyleAlert];
-                        UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
-                        [alert addAction:okAction];
-                        [self presentViewController:alert animated:YES completion:nil];
-                        [_channel invokeMethod:@"stitchingCompleted" arguments:equiPath];
+                        [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
                     } else if (error) {
                         NSLog(@"Error saving photo: %@", error);
                     }
@@ -684,25 +597,33 @@ UIView *flick=nil;
 
 - (void)compassEvent:(NSDictionary*)info
 {
-	enum DMDCompassEvents event = (enum DMDCompassEvents)[(NSNumber*)[info objectForKey:@"event"] intValue];
-	NSString *msg = nil;
-	switch (event)
-	{
-		case kDMDCompassInitializing:
-			msg = NSLocalizedString(@"Initializing the compass",@"");
-			break;
-		case kDMDCompassNeedsCalibration:
-			msg = NSLocalizedString(@"Compass needs calibration",@"");
-			break;
-		case kDMDCompassInterference:
-			msg = NSLocalizedString(@"Shooting interrupted because of high interference.\n\nPlease calibrate the compass.", @"");
-			break;
-		case kDMDCompassReady:
-		default:
-			msg = NSLocalizedString(@"Compass ready", @"");
-			break;
-	}
-	NSLog(@"%@", msg);
+}
+
+- (void)startPrintTimer {
+    self.timerInfo = [NSTimer scheduledTimerWithTimeInterval:0.1
+                                                       target:self
+                                                     selector:@selector(printIndicatorValues)
+                                                     userInfo:nil
+                                                      repeats:YES];
+}
+
+- (void)stopPrintTimer {
+    [self.timerInfo invalidate];
+    self.timerInfo = nil;
+}
+
+- (void)printIndicatorValues
+{
+    // getIndicators is not supported for the current plan, if it were supported this method should be called to be able to receive the percentage of progress
+	NSDictionary *ind = [[Monitor instance] getIndicators];
+	NSLog(@"%.2f    %.2f    %.2f    %@    %d",
+         [[ind objectForKey:@"roll"] doubleValue],
+         [[ind objectForKey:@"pitch"] doubleValue],
+         [[ind objectForKey:@"percentage"] doubleValue],
+         ([[ind objectForKey:@"orientation"] intValue]==-1?@"LTR":@"RTL"),// -1=LTR 1=RTL
+         [[ind objectForKey:@"fovx"] intValue]
+    );
+    [_channel invokeMethod:@"onUpdateIndicators" arguments:ind];
 }
 
 - (void)onLensSelectionFinished {
@@ -723,30 +644,24 @@ UIView *flick=nil;
 }
 
 - (void)deviceVerticalityChanged:(NSNumber *)isVertical {
-    NSLog(@"deviceVerticalityChanged %d", [isVertical boolValue]);
-    // Pass isVertical as an integer NSNumber
     [_channel invokeMethod:@"deviceVerticalityChanged" arguments:@([isVertical intValue])];
 }
 
 - (void)rotatorConnected {
-    NSLog(@"rotatorConnected!");
     _isRotatorConnected = YES;
     [_channel invokeMethod:@"rotatorConnected" arguments:nil];
 }
 
 - (void)rotatorDisconnected {
-    NSLog(@"rotatorDisconnected!");
     _isRotatorConnected = NO;
     [_channel invokeMethod:@"rotatorDisconnected" arguments:nil];
 }
 
 - (void)rotatorStartedRotating {
-    NSLog(@"rotatorStartedRotating!");
     [_channel invokeMethod:@"rotatorStartedRotating" arguments:nil];
 }
 
 - (void)rotatorFinishedRotating {
-    NSLog(@"rotatorFinishedRotating!");
     [_channel invokeMethod:@"rotatorFinishedRotating" arguments:nil];
 }
 
