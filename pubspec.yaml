@@ -1,6 +1,6 @@
 name: panoramic_camera
-description: "A new Flutter plugin project."
-version: 0.0.1
+description: "Flutter widget that integrates with native Android/iOS panoramic camera functionality"
+version: 0.0.2
 homepage:
 
 environment:

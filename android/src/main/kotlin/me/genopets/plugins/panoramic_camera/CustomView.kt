@@ -61,9 +61,6 @@ class CustomView @JvmOverloads constructor(
         }
 
         override fun onFinishRelease() {
-            mRelativeLayout.removeView(viewGroup);
-            viewGroup = null;
-            mDMDCapture.startCamera(activity, logoSize, logoSize)
             mainHandler.post { channel.invokeMethod("onFinishRelease", null) }
         }
 
@@ -124,7 +121,6 @@ class CustomView @JvmOverloads constructor(
 
         override fun onFinishGeneratingEqui() {
             mIsShootingStarted = false
-            mDMDCapture.startCamera(activity, logoSize, logoSize)
             mainHandler.post { channel.invokeMethod  ("onFinishGeneratingEqui", mEquiPath) }
         }
 
@@ -205,8 +201,18 @@ class CustomView @JvmOverloads constructor(
     }
 
     fun onResume() {
-        mRelativeLayout.addView(viewGroup);
-        mDMDCapture.startCamera(activity, logoSize, logoSize)
+        try {
+            // Ensure viewGroup is not already attached to another parent
+            val currentParent = viewGroup?.parent as? ViewGroup
+            currentParent?.removeView(viewGroup)
+
+            // Add viewGroup to mRelativeLayout
+            mRelativeLayout.addView(viewGroup)
+            mDMDCapture.startCamera(activity, logoSize, logoSize)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting camera: ${e.message}", e)
+            throw Exception("Error starting camera: ${e.message}", e)
+        }
     }
 
     fun startShooting() {
