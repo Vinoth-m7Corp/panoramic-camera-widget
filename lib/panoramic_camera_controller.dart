@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:panoramic_camera/constants.dart';
 import 'package:panoramic_camera/panoramic_camera_interface.dart';
 
 class PanoramicCameraController {
@@ -37,19 +36,19 @@ class PanoramicCameraController {
   }
 
   Future<void> onResume() async {
-    if (Platform.isAndroid) return _cameraControl?.invokeMethod('onResume');
+    return _cameraControl?.invokeMethod(PanoramicMethodNames.onResume);
   }
 
   Future<void> onPause() async {
-    if (Platform.isAndroid) return _cameraControl?.invokeMethod('onPause');
+    return _cameraControl?.invokeMethod(PanoramicMethodNames.onPause);
   }
 
   Future<void> startShooting() async {
-    await _cameraControl?.invokeMethod('startShooting');
+    await _cameraControl?.invokeMethod(PanoramicMethodNames.startShooting);
   }
 
   Future<void> finishShooting() async {
-    await _cameraControl?.invokeMethod('finishShooting');
+    await _cameraControl?.invokeMethod(PanoramicMethodNames.finishShooting);
   }
 
   VoidCallback? onCameraStopped;

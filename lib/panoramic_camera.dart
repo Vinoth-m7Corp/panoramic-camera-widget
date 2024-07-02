@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:panoramic_camera/constants.dart';
 import 'package:panoramic_camera/panoramic_camera_controller.dart';
 import 'package:panoramic_camera/panoramic_camera_interface.dart';
 
@@ -14,12 +15,14 @@ class PanoramicCameraWidget extends StatefulWidget {
   final PanoramicCameraController controller;
   final int outputHeight;
   final bool showGuide;
+  final Widget? loadingWidget;
 
   const PanoramicCameraWidget({
     super.key,
     this.outputHeight = 800,
     this.showGuide = true,
     required this.controller,
+    this.loadingWidget,
   });
 
   @override
@@ -30,6 +33,7 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
     with WidgetsBindingObserver
     implements PanoramicCameraInterface {
   static const platform = MethodChannel('panoramic_channel');
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -43,9 +47,10 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
   }
 
   Future<void> _initializeCamera() async {
+    if (Platform.isAndroid) isLoading = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted && Platform.isAndroid) {
-        await platform.invokeMethod('onResume');
+      if (mounted) {
+        invokeMethod(PanoramicMethodNames.onResume);
       }
     });
   }
@@ -57,62 +62,65 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
 
   Future<void> _handleMethod(MethodCall call) async {
     switch (call.method) {
-      case 'onCameraStopped':
+      case PanoramicMethodNames.onCameraStopped:
         widget.controller.onCameraStopped?.call();
         break;
-      case 'onCameraStarted':
+      case PanoramicMethodNames.onCameraStarted:
+        setState(() {
+          isLoading = false;
+        });
         widget.controller.onCameraStarted?.call();
         break;
-      case 'onFinishClear':
+      case PanoramicMethodNames.onFinishClear:
         widget.controller.onFinishClear?.call();
         break;
-      case 'onFinishRelease':
+      case PanoramicMethodNames.onFinishRelease:
         widget.controller.onFinishRelease?.call();
         break;
-      case 'preparingToShoot':
+      case PanoramicMethodNames.preparingToShoot:
         widget.controller.onPreparingToShoot?.call();
         break;
-      case 'canceledPreparingToShoot':
+      case PanoramicMethodNames.canceledPreparingToShoot:
         widget.controller.onCanceledPreparingToShoot?.call();
         break;
-      case 'takingPhoto':
+      case PanoramicMethodNames.takingPhoto:
         widget.controller.onTakingPhoto?.call();
         break;
-      case 'photoTaken':
+      case PanoramicMethodNames.photoTaken:
         widget.controller.onPhotoTaken?.call();
         break;
-      case 'shootingCompleted':
+      case PanoramicMethodNames.shootingCompleted:
         widget.controller.onShootingCompleted?.call(call.arguments);
         break;
-      case 'onDirectionUpdated':
+      case PanoramicMethodNames.onDirectionUpdated:
         widget.controller.onDirectionUpdated?.call(call.arguments);
         break;
-      case 'deviceVerticalityChanged':
+      case PanoramicMethodNames.deviceVerticalityChanged:
         widget.controller.onDeviceVerticalityChanged?.call(call.arguments);
         break;
-      case 'compassEvent':
+      case PanoramicMethodNames.compassEvent:
         final args = Map<String, dynamic>.from(call.arguments as Map);
         widget.controller.onCompassEvent?.call(args);
         break;
-      case 'onFinishGeneratingEqui':
+      case PanoramicMethodNames.onFinishGeneratingEqui:
         widget.controller.onFinishGeneratingEqui?.call(call.arguments);
         break;
-      case 'onExposureChanged':
+      case PanoramicMethodNames.onExposureChanged:
         widget.controller.onExposureChanged?.call(call.arguments);
         break;
-      case 'onRotatorConnected':
+      case PanoramicMethodNames.onRotatorConnected:
         widget.controller.onRotatorConnected?.call();
         break;
-      case 'onRotatorDisconnected':
+      case PanoramicMethodNames.onRotatorDisconnected:
         widget.controller.onRotatorDisconnected?.call();
         break;
-      case 'onStartedRotating':
+      case PanoramicMethodNames.onStartedRotating:
         widget.controller.onStartedRotating?.call();
         break;
-      case 'onFinishedRotating':
+      case PanoramicMethodNames.onFinishedRotating:
         widget.controller.onFinishedRotating?.call();
         break;
-      case 'onUpdateIndicators':
+      case PanoramicMethodNames.onUpdateIndicators:
         final args = Map<String, dynamic>.from(call.arguments as Map);
         widget.controller.onUpdateIndicators?.call(args);
         break;
@@ -133,32 +141,46 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      platform.invokeMethod('onResume');
+      if (Platform.isAndroid) isLoading = true;
+      platform.invokeMethod(PanoramicMethodNames.onResume);
     } else if (state == AppLifecycleState.paused) {
-      platform.invokeMethod('onPause');
+      platform.invokeMethod(PanoramicMethodNames.onPause);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final height = constraints.maxHeight;
-          final width = constraints.maxWidth;
-
-          return SizedBox(
-            height: height,
-            width: width,
-            child: UiKitView(
-              viewType: 'panoramic_view',
-              creationParams: {'height': height, 'width': width},
-              creationParamsCodec: const StandardMessageCodec(),
-            ),
-          );
-        },
-      );
-    }
-    return const AndroidView(viewType: 'panoramic_view');
+    return Stack(
+      children: [
+        if (defaultTargetPlatform == TargetPlatform.iOS)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final height = constraints.maxHeight;
+              final width = constraints.maxWidth;
+              return SizedBox(
+                height: height,
+                width: width,
+                child: UiKitView(
+                  viewType: 'panoramic_view',
+                  creationParams: {'height': height, 'width': width},
+                  creationParamsCodec: const StandardMessageCodec(),
+                ),
+              );
+            },
+          )
+        else
+          const AndroidView(viewType: 'panoramic_view'),
+        if (isLoading)
+          widget.loadingWidget ??
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black,
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+      ],
+    );
   }
 }
