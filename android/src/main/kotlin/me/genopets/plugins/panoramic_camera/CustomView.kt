@@ -43,6 +43,7 @@ class CustomView @JvmOverloads constructor(
 
     private var logoSize = 500
     private var outputHeight: Int = 500
+    private var showLogo = true
 
 
     private val mCallbackInterface: CallbackInterfaceShooter = object : CallbackInterfaceShooter {
@@ -65,7 +66,7 @@ class CustomView @JvmOverloads constructor(
         }
 
         override fun onDirectionUpdated(direction: Float) {
-            mainHandler.post { channel.invokeMethod("onDirectionUpdated", direction) }
+//            mainHandler.post { channel.invokeMethod("onDirectionUpdated", direction) }
         }
 
         override fun preparingToShoot() {
@@ -208,10 +209,29 @@ class CustomView @JvmOverloads constructor(
 
             // Add viewGroup to mRelativeLayout
             mRelativeLayout.addView(viewGroup)
+
+            if (!showLogo){
+                removeViewByClass(this, "YinYangGLView")
+            }
+
             mDMDCapture.startCamera(activity, logoSize, logoSize)
         } catch (e: Exception) {
             Log.e(TAG, "Error starting camera: ${e.message}", e)
             throw Exception("Error starting camera: ${e.message}", e)
+        }
+    }
+
+    private fun removeViewByClass(viewGroup: ViewGroup, className: String) {
+        for (i in 0 until viewGroup.childCount) {
+            val child = viewGroup.getChildAt(i)
+            if (child.javaClass.simpleName == className) {
+                viewGroup.removeViewAt(i)
+                Log.d("ViewPrinter", "Removed view of class: $className at index $i")
+                return
+            }
+            if (child is ViewGroup) {
+                removeViewByClass(child, className)
+            }
         }
     }
 
@@ -244,6 +264,7 @@ class CustomView @JvmOverloads constructor(
 
     fun setShowLogo(showLogo: Boolean) {
         if(!showLogo) logoSize = 10
+        this.showLogo = showLogo;
     }
 
     // All this logic is necessary to send percentage updates to the channel
@@ -257,7 +278,7 @@ class CustomView @JvmOverloads constructor(
                 var map = mDMDCapture.getIndicators()
                 mainHandler.post { channel.invokeMethod  ("onUpdateIndicators", map) }
 
-                timerHandler?.postDelayed(this, 100)
+                timerHandler?.postDelayed(this, 500)
             }
         }
         timerHandler?.post(timerRunnable!!)

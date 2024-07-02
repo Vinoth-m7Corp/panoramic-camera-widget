@@ -72,8 +72,17 @@ UIImageView *btnHDR = nil;
 - (void)setupMethodChannel {
     __weak typeof(self) weakSelf = self;
     [_channel setMethodCallHandler:^(FlutterMethodCall *call, FlutterResult result) {
-        if ([@"startShooting" isEqualToString:call.method]) {
+        NSString *method = call.method;
+        if ([method isEqualToString:@"startShooting"]) {
             [weakSelf startShooting];
+            result(nil);
+        } else if ([method isEqualToString:@"onResume"]) {
+            result(nil);
+        } else if ([method isEqualToString:@"onPause"]) {
+            result(nil);
+        } else if ([method isEqualToString:@"setShowGuide"]) {
+            result(nil);
+        } else if ([method isEqualToString:@"setOutputHeight"]) {
             result(nil);
         } else {
             result(FlutterMethodNotImplemented);
