@@ -62,11 +62,14 @@ class CustomView @JvmOverloads constructor(
         }
 
         override fun onFinishRelease() {
+            mRelativeLayout.removeView(viewGroup);
+            viewGroup = null;
+            mDMDCapture.startCamera(activity, logoSize, logoSize)
             mainHandler.post { channel.invokeMethod("onFinishRelease", null) }
         }
 
         override fun onDirectionUpdated(direction: Float) {
-//            mainHandler.post { channel.invokeMethod("onDirectionUpdated", direction) }
+            // mainHandler.post { channel.invokeMethod("onDirectionUpdated", direction) }
         }
 
         override fun preparingToShoot() {
@@ -122,6 +125,7 @@ class CustomView @JvmOverloads constructor(
 
         override fun onFinishGeneratingEqui() {
             mIsShootingStarted = false
+            mDMDCapture.startCamera(activity, logoSize, logoSize)
             mainHandler.post { channel.invokeMethod  ("onFinishGeneratingEqui", mEquiPath) }
         }
 
@@ -203,21 +207,14 @@ class CustomView @JvmOverloads constructor(
 
     fun onResume() {
         try {
-            // Ensure viewGroup is not already attached to another parent
-            val currentParent = viewGroup?.parent as? ViewGroup
-            currentParent?.removeView(viewGroup)
-
-            // Add viewGroup to mRelativeLayout
-            mRelativeLayout.addView(viewGroup)
+            mRelativeLayout.addView(viewGroup);
 
             if (!showLogo){
                 removeViewByClass(this, "YinYangGLView")
             }
-
             mDMDCapture.startCamera(activity, logoSize, logoSize)
         } catch (e: Exception) {
-            Log.e(TAG, "Error starting camera: ${e.message}", e)
-            throw Exception("Error starting camera: ${e.message}", e)
+            Log.e(TAG, "Error starting camera: ${e.message}")
         }
     }
 
@@ -278,7 +275,7 @@ class CustomView @JvmOverloads constructor(
                 var map = mDMDCapture.getIndicators()
                 mainHandler.post { channel.invokeMethod  ("onUpdateIndicators", map) }
 
-                timerHandler?.postDelayed(this, 500)
+                timerHandler?.postDelayed(this, 250)
             }
         }
         timerHandler?.post(timerRunnable!!)
