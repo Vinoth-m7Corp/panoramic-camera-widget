@@ -18,6 +18,7 @@ class _MyAppState extends State<MyApp> {
   int isVertical = 0;
   bool isShootingStarted = false;
   int photos = 0;
+  bool isHide = false;
   late PanoramicCameraController controller;
 
   @override
@@ -67,7 +68,7 @@ class _MyAppState extends State<MyApp> {
           });
         } else if (photos == 1) {
           setState(() {
-            helperText = 'Rotate left   right or tap to restart';
+            helperText = 'Rotate left right or tap to restart';
           });
         } else {
           setState(() {
@@ -85,11 +86,25 @@ class _MyAppState extends State<MyApp> {
           appBar: AppBar(
             title: const Text('Plugin example app'),
           ),
-          floatingActionButton: FloatingActionButton(
-              child: Icon(Icons.camera_alt),
-              onPressed: () {
-                controller.startShooting();
-              }),
+          floatingActionButton: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                child: const Icon(Icons.camera_alt),
+                onPressed: () {
+                  controller.startShooting();
+                },
+              ),
+              FloatingActionButton(
+                child: const Icon(Icons.change_circle),
+                onPressed: () {
+                  setState(() {
+                    isHide = !isHide;
+                  });
+                },
+              ),
+            ],
+          ),
           body: SizedBox(
             width: double.infinity,
             child: Column(
@@ -99,9 +114,11 @@ class _MyAppState extends State<MyApp> {
                   helperText,
                   style: const TextStyle(color: Colors.black),
                 ),
-                SizedBox(
-                  height: 630,
-                  width: 330,
+                Container(
+                  decoration: BoxDecoration(
+                      border: Border.all(width: 2, color: Colors.yellow)),
+                  height: isHide ? 200 : 630,
+                  width: isHide ? 150 : 330,
                   child: PanoramicCameraWidget(
                     showGuide: true,
                     controller: controller,

@@ -34,6 +34,8 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
     implements PanoramicCameraInterface {
   static const platform = MethodChannel('panoramic_channel');
   bool isLoading = false;
+  double? lastHeight;
+  double? lastWidth;
 
   @override
   void initState() {
@@ -141,7 +143,6 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      if (Platform.isAndroid) isLoading = true;
       platform.invokeMethod(PanoramicMethodNames.onResume);
     } else if (state == AppLifecycleState.paused) {
       platform.invokeMethod(PanoramicMethodNames.onPause);
@@ -157,6 +158,18 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
             builder: (context, constraints) {
               final height = constraints.maxHeight;
               final width = constraints.maxWidth;
+
+              // Check if the dimensions have changed
+              if (height != lastHeight || width != lastWidth) {
+                lastHeight = height;
+                lastWidth = width;
+
+                platform.invokeMethod(PanoramicMethodNames.updateFrame, {
+                  'height': height,
+                  'width': width,
+                });
+              }
+
               return SizedBox(
                 height: height,
                 width: width,

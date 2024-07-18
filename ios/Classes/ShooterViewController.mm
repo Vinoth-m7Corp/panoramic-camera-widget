@@ -84,6 +84,13 @@ UIImageView *btnHDR = nil;
             result(nil);
         } else if ([method isEqualToString:@"setOutputHeight"]) {
             result(nil);
+        } else if ([method isEqualToString:@"updateFrame"]) {
+            NSDictionary* args = call.arguments;
+            CGFloat height = [args[@"height"] floatValue];
+            CGFloat width = [args[@"width"] floatValue];
+            CGRect newFrame = CGRectMake(0, 0, width, height);
+            [weakSelf updateFrame:newFrame];
+            result(nil);
         } else {
             result(FlutterMethodNotImplemented);
         }
@@ -92,6 +99,13 @@ UIImageView *btnHDR = nil;
 
 void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 {
+}
+
+- (void)updateFrame:(CGRect)newFrame {
+    _initialFrame = newFrame;
+    CGRect frame = _initialFrame;
+    sv.frame = calculateShooterViewFrame(frame);
+    aView.frame = frame;
 }
 
 - (void)checkCameraPermissions
@@ -185,7 +199,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     CGRect frame = _initialFrame;
     aView = [[UIView alloc] initWithFrame:frame];
     aView.backgroundColor = [UIColor blackColor];
-    [aView setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
     
     self.isRotatorMode = NO;
     
@@ -201,8 +214,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     // The yin yang height size depends on the device screen width
     const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
 
-    CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
-
+    CGRect shooterViewFrame = calculateShooterViewFrame(frame);
 
     sv = [[ShooterView alloc] initWithFrame:shooterViewFrame andYinYang:!hideYinYang andCameraControls:NO];
     
@@ -672,6 +684,15 @@ UILabel *label = nil;
 
 - (void)rotatorFinishedRotating {
     [_channel invokeMethod:@"rotatorFinishedRotating" arguments:nil];
+}
+
+CGRect calculateShooterViewFrame(CGRect frame) {
+    // The yin yang height size depends on the device screen width
+    const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
+
+    CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
+
+    return shooterViewFrame;
 }
 
 @end
