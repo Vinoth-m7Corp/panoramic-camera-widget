@@ -41,7 +41,9 @@
     } else if ([@"onPause" isEqualToString:call.method]) {
         // Handle pause
         result(nil);
-    } else {
+    } else if ([@"updateFrame" isEqualToString:call.method]) {
+        result(nil);
+    }  else {
         result(FlutterMethodNotImplemented);
     }
 }
