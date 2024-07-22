@@ -210,11 +210,18 @@ class CustomView @JvmOverloads constructor(
             mRelativeLayout.addView(viewGroup);
 
             if (!showLogo){
-                removeViewByClass(this, "YinYangGLView")
+                removeViewByIndex(viewGroup!!, 3)
             }
             mDMDCapture.startCamera(activity, logoSize, logoSize)
         } catch (e: Exception) {
             Log.e(TAG, "Error starting camera: ${e.message}")
+        }
+    }
+
+    private fun removeViewByIndex(viewGroup: ViewGroup, index: Int) {
+        if (index >= 0 && index < viewGroup.childCount) {
+            val child = viewGroup.getChildAt(index)
+            viewGroup.removeViewAt(index)
         }
     }
 
@@ -225,9 +232,6 @@ class CustomView @JvmOverloads constructor(
                 viewGroup.removeViewAt(i)
                 Log.d("ViewPrinter", "Removed view of class: $className at index $i")
                 return
-            }
-            if (child is ViewGroup) {
-                removeViewByClass(child, className)
             }
         }
     }
