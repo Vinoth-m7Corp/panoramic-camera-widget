@@ -1,12 +1,3 @@
-//
-//  ShooterViewController.m
-//  engine_demo
-//
-//  Created by Elias Khoury on 5/2/12.
-//  Copyright (c) 2012 Dermandar (Offshore) S.A.L. . All rights reserved.
-//
-
-//#define CAPTURE_VIDEO_FRAME
 
 #import "ShooterViewController.h"
 #import <AssetsLibrary/AssetsLibrary.h>
@@ -29,14 +20,9 @@
 {
     BOOL tookPhoto;
     BOOL hideYinYang;
-    CBCentralManager *bluetoothManager;
 }
 - (void)willEnterForeground:(NSNotification*)notification;
 @property(nonatomic,assign)bool started;
-@property(nonatomic,assign)bool continuousMode;
-@property(nonatomic,assign)BOOL isRotatorMode;
-@property(nonatomic,assign)BOOL isRotatorConnected;
-@property(nonatomic,assign)BOOL isHDROn;
 
 @property (retain) NSString *firstImagePath;
 @property (retain) NSString *originalsFolderPath;
@@ -49,15 +35,7 @@
 @implementation ShooterViewController
 
 ShooterView *sv=nil;
-UITextField* textField=nil;
-NSDictionary* settings=nil;
 UIView *aView=nil;
-UIButton *btnSelectLens = nil;
-UIButton *ivRotatorSwitch = nil;
-UIView *circleView = nil;
-UIImageView *btnHDR = nil;
-@synthesize isRotatorConnected = _isRotatorConnected;
-@synthesize isHDROn = _isHDROn;
 
 - (instancetype)initWithMethodChannel:(FlutterMethodChannel *)channel frame:(CGRect)frame {
     self = [super init];
@@ -154,69 +132,35 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
 {
-    if (central.state == CBManagerStatePoweredOn) {
-        [self checkCameraPermissions];
-    }
-    else if (central.state == CBManagerStateUnauthorized) {
-        [label setHidden:NO];
-        [label setText:@"Bluetooth access is required.\nPlease enable Bluetooth access from\nSettings > theVRkit > Bluetooth"];
-    }
-    else if (central.state == CBManagerStatePoweredOff) {
-        [label setHidden:NO];
-        [label setText:@"Bluetooth should be turned on.\nPlease turn on Bluetooth from\nSettings > Bluetooth"];
-    }
-    else {
-        [label setHidden:NO];
-    }
 }
 
 
 -(void) startDMDSDKSafe
 {
-    if(!bluetoothManager&&self.isRotatorMode) {
-        bluetoothManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
-    }
-    else if(!self.isRotatorMode) {
-        [self checkCameraPermissions];
-    }
+    [self checkCameraPermissions];
 }
 
 - (void)startDMDSDK
 {
     sv = nil;
-    textField = nil;
-    settings = nil;
     self.timerInfo = nil;
     aView = nil;
-    btnSelectLens = nil;
-    ivRotatorSwitch = nil;
-    circleView = nil;
-    btnHDR = nil;
-    
-    _isRotatorConnected = NO;
-    _isHDROn = NO;
     
     CGRect frame = _initialFrame;
     aView = [[UIView alloc] initWithFrame:frame];
     aView.backgroundColor = [UIColor blackColor];
     
-    self.isRotatorMode = NO;
-    
-    self.isRotatorMode = [[Monitor instance] setRotatorMode:self.isRotatorMode];
     self.started = false;
-    self.continuousMode = false;
     
     tookPhoto = NO;
     [Monitor instance].delegate = self;
-    
-    hideYinYang = NO;
     
     // The yin yang height size depends on the device screen width
     const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
 
     CGRect shooterViewFrame = calculateShooterViewFrame(frame);
 
-    sv = [[ShooterView alloc] initWithFrame:shooterViewFrame andYinYang:!hideYinYang andCameraControls:NO];
+    sv = [[ShooterView alloc] initWithFrame:shooterViewFrame andYinYang:YES andCameraControls:NO];
     
     CGRect maskFrame = CGRectMake(0, yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame));
     UIView *maskView = [[UIView alloc] initWithFrame:maskFrame];
@@ -226,7 +170,8 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     
     [[Monitor instance] setCircleDetectionCallback:lensDetectionCallback withObject:(__bridge void *)(self)];
     
-    [sv setContinuousMode:self.continuousMode];
+    // TODO: Check continuousMode functionality
+//    [sv setContinuousMode:self.continuousMode];
     sv.tag = TAG_CAMERAVIEW;
     
     [_channel invokeMethod:@"onCameraStarted" arguments:nil];
@@ -258,45 +203,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 
     // [self startPrintTimer];
     
-    btnSelectLens = [[UIButton alloc] init];
-    [btnSelectLens.layer setMasksToBounds:YES];
-    [btnSelectLens.layer setCornerRadius:15.0];
-    [btnSelectLens.titleLabel setFont:[UIFont systemFontOfSize:15]];
-    [btnSelectLens setTitle:[DMDLensSelector currentLensName] forState:UIControlStateNormal];
-    [btnSelectLens setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    [btnSelectLens setBackgroundColor:[UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.35]];
-    [btnSelectLens sizeToFit];
-    [btnSelectLens setFrame:CGRectMake(frame.size.width - btnSelectLens.bounds.size.width - 20, frame.size.height - btnSelectLens.bounds.size.height - 30, btnSelectLens.bounds.size.width + 10, btnSelectLens.bounds.size.height)];
-    [btnSelectLens addTarget:self action:@selector(openLensSelector:) forControlEvents:UIControlEventTouchUpInside];
-    
-    ivRotatorSwitch = [[UIButton alloc] init];
-    [ivRotatorSwitch.layer setMasksToBounds:YES];
-    [ivRotatorSwitch.layer setCornerRadius:15.0];
-    [ivRotatorSwitch setTitle:self.isRotatorMode ? @"Rotator" : @"Handheld" forState:UIControlStateNormal];
-    [ivRotatorSwitch setBackgroundColor:[UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.35]];
-    [ivRotatorSwitch sizeToFit];
-    float sc = 1.0;
-    [ivRotatorSwitch setFrame:CGRectMake(frame.size.width - ivRotatorSwitch.bounds.size.width * sc - 10, frame.size.height - btnSelectLens.bounds.size.height - ivRotatorSwitch.bounds.size.height * sc - 10 - 30, ivRotatorSwitch.bounds.size.width * sc, ivRotatorSwitch.bounds.size.height * sc)];
-    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(rotatorToggle:)];
-    singleTap.numberOfTapsRequired = 1;
-    [ivRotatorSwitch setUserInteractionEnabled:YES];
-    [ivRotatorSwitch addGestureRecognizer:singleTap];
-    
-    float sc2 = (1.0 / 3.0);
-    btnHDR = [[UIImageView alloc] init];
-    [btnHDR setImage:[UIImage imageNamed:_isHDROn ? @"hdr_on" : @"hdr_off"]];
-    [btnHDR sizeToFit];
-    [btnHDR setFrame:CGRectMake(frame.size.width - btnHDR.bounds.size.width * sc2 - 10, frame.size.height - btnSelectLens.bounds.size.height - ivRotatorSwitch.bounds.size.height - btnHDR.bounds.size.height * sc2 - 10 - 10 - 30, btnHDR.bounds.size.width * sc2, btnHDR.bounds.size.height * sc2)];
-    UITapGestureRecognizer *singleTapHDR = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hdrToggle:)];
-    singleTapHDR.numberOfTapsRequired = 1;
-    [btnHDR setUserInteractionEnabled:YES];
-    [btnHDR addGestureRecognizer:singleTapHDR];
-    [btnHDR setHidden:(!self.isRotatorMode) || (!([self ramQuantity] > 2000) || ([DMDLensSelector currentLensID] == kLensNone))];
-    
     [self.view addSubview:aView];
-    // [self.view addSubview:btnSelectLens];
-    // [self.view addSubview:ivRotatorSwitch];
-    // [self.view addSubview:btnHDR];
     
     [self drawDefaultCircle];
 }
@@ -316,10 +223,6 @@ UILabel *label = nil;
 
 - (void)dealloc
 {
-    if (circleView) {
-        [circleView removeFromSuperview];
-        circleView = nil;
-    }
     [self leaveShooter];
     
     // Clean up any notifications or observers if necessary
@@ -339,27 +242,11 @@ UILabel *label = nil;
 {
     if(self.started)
         [self stop:nil];
-    self.isRotatorMode = !self.isRotatorMode;
-    self.isRotatorMode = [[Monitor instance] setRotatorMode:self.isRotatorMode];
-    [ivRotatorSwitch setTitle:self.isRotatorMode?@"Rotator":@"Handheld" forState:UIControlStateNormal];
     
-    if(!self.isRotatorMode && _isHDROn)
-        [self hdrToggle:nil];
-    
-    if(btnHDR)
-        [btnHDR setHidden:(!self.isRotatorMode) || (!([self ramQuantity] > 2000) || ([DMDLensSelector currentLensID] == kLensNone))];
 }
 
 - (void)hdrToggle:(id)sender
 {
-    if(self.started)
-        [self stop:nil];
-    _isHDROn = !_isHDROn;
-    if(_isHDROn)
-        [sv setExposureHDR:nil];
-    else
-        [sv setExposureAuto:nil];
-    [btnHDR setImage:[UIImage imageNamed:_isHDROn?@"hdr_on":@"hdr_off"]];
 }
 
 - (NSString *) applicationDocumentsDirectory
@@ -403,24 +290,6 @@ UILabel *label = nil;
 
 - (void)drawDefaultCircle
 {
-    NSDictionary* dict=[[Monitor instance] getCurrentLensParams];
-    if(circleView){
-        [circleView removeFromSuperview];
-        circleView = nil;
-    }
-    float cx=-[[dict objectForKey:@"cx"] floatValue], cy=[[dict objectForKey:@"cy"] floatValue], radius=[[dict objectForKey:@"radius"] floatValue];
-    if(radius) {
-        float sqh=[sv bounds].size.height*radius*2;
-        
-        circleView = [[UIView alloc] initWithFrame:CGRectMake(([sv bounds].size.width-sqh)*0.5f + ([sv bounds].size.width)*cx, ([sv bounds].size.height-sqh)*0.5f + ([sv bounds].size.height)*cy, sqh, sqh)];
-        circleView.alpha = 0.75;
-        circleView.layer.borderWidth = 2;
-        circleView.layer.borderColor = [UIColor yellowColor].CGColor;
-        circleView.layer.cornerRadius = radius*sqh;
-        circleView.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
-        [sv addSubview:circleView];
-        [circleView setUserInteractionEnabled:NO];
-    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -438,11 +307,6 @@ UILabel *label = nil;
 - (void)viewDidDisappear:(BOOL)animated
 {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return (interfaceOrientation == UIInterfaceOrientationPortrait);
 }
 
 - (BOOL)shouldAutorotate
@@ -472,20 +336,6 @@ UILabel *label = nil;
 - (void)start:(id)sender
 {
     // [self startPrintTimer];
-    if (self.isRotatorMode && !_isRotatorConnected) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil
-        message:@"Rotator disconnected!"
-        preferredStyle:UIAlertControllerStyleAlert];
-        [self presentViewController:alert animated:YES completion:nil];
-        
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            [alert dismissViewControllerAnimated:YES completion:nil];
-        });
-        
-        self.started = false;
-        return;
-    }
-    
     tookPhoto = NO;
     self.started = [[Monitor instance] startShooting];
 }
@@ -494,7 +344,6 @@ UILabel *label = nil;
 {
     // [self startPrintTimer];
     [[Monitor instance] setLens:[DMDLensSelector currentLensID]];
-    self.isRotatorMode = [[Monitor instance] setRotatorMode: self.isRotatorMode];
 	[[Monitor instance] restart];
     self.started=false;
 }
@@ -649,12 +498,8 @@ UILabel *label = nil;
 
 - (void)onLensSelectionFinished {
     
-    [btnSelectLens setTitle:[DMDLensSelector currentLensName] forState:UIControlStateNormal];
-    [btnSelectLens sizeToFit];
     CGRect frame  = [[UIScreen mainScreen] bounds];
-    [btnSelectLens setFrame:CGRectMake(frame.size.width - btnSelectLens.bounds.size.width - 20, frame.size.height - btnSelectLens.bounds.size.height - 30, btnSelectLens.bounds.size.width + 10, btnSelectLens.bounds.size.height)];
     self.started=false;
-    //[[Monitor instance] setLens:[DMDLensSelector currentLensID]];
     [self restart:nil];
     [self drawDefaultCircle];
     [_channel invokeMethod:@"onLensSelectionFinished" arguments:nil];
@@ -669,12 +514,10 @@ UILabel *label = nil;
 }
 
 - (void)rotatorConnected {
-    _isRotatorConnected = YES;
     [_channel invokeMethod:@"rotatorConnected" arguments:nil];
 }
 
 - (void)rotatorDisconnected {
-    _isRotatorConnected = NO;
     [_channel invokeMethod:@"rotatorDisconnected" arguments:nil];
 }
 
@@ -689,9 +532,7 @@ UILabel *label = nil;
 CGRect calculateShooterViewFrame(CGRect frame) {
     // The yin yang height size depends on the device screen width
     const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
-
     CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
-
     return shooterViewFrame;
 }
 
