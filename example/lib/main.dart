@@ -19,6 +19,9 @@ class _MyAppState extends State<MyApp> {
   bool isShootingStarted = false;
   int photos = 0;
   bool isHide = false;
+  double pitch = 0.0;
+  double roll = 0.0;
+  double percentage = 0.0;
   late PanoramicCameraController controller;
 
   @override
@@ -26,12 +29,18 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     controller = PanoramicCameraController(
       onCameraStarted: () {
-        print('Camera started');
+        debugPrint('Camera started');
       },
       onFinishRelease: () {
-        print('Finished release');
+        debugPrint('Finished release');
       },
-      onShootingCompleted: (value) {},
+      onShootingCompleted: (bool value) {
+        debugPrint('onShootingCompleted $value');
+        isShootingStarted = false;
+      },
+      onShootingCanceled: (bool value) {
+        debugPrint('onShootingCanceled $value');
+      },
       onCameraStopped: () {},
       onDeviceVerticalityChanged: (int val) {
         isVertical = val;
@@ -50,11 +59,13 @@ class _MyAppState extends State<MyApp> {
       onDirectionUpdated: (value) {
         // print('Device onDirectionUpdated changed: $value');
       },
-      onCompassEvent: (value) {
-        print('onCompassEvent: ${value.toString()}');
-      },
+      onCompassEvent: (value) {},
       onUpdateIndicators: (value) {
-        print('onUpdateIndicators: ${value.toString()}');
+        setState(() {
+          percentage = value.percentage;
+          pitch = value.pitch;
+          roll = value.roll;
+        });
       },
       onFinishGeneratingEqui: (value) {
         debugPrint("---------------Foto creada---------------");
@@ -92,6 +103,7 @@ class _MyAppState extends State<MyApp> {
               FloatingActionButton(
                 child: const Icon(Icons.camera_alt),
                 onPressed: () {
+                  isShootingStarted = true;
                   controller.startShooting();
                 },
               ),
@@ -105,27 +117,38 @@ class _MyAppState extends State<MyApp> {
               ),
             ],
           ),
-          body: SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  helperText,
-                  style: const TextStyle(color: Colors.black),
+          body: Stack(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      helperText,
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                          border: Border.all(width: 2, color: Colors.yellow)),
+                      height: isHide ? 200 : 630,
+                      width: isHide ? 150 : 330,
+                      child: PanoramicCameraWidget(
+                        showGuide: true,
+                        controller: controller,
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  decoration: BoxDecoration(
-                      border: Border.all(width: 2, color: Colors.yellow)),
-                  height: isHide ? 200 : 630,
-                  width: isHide ? 150 : 330,
-                  child: PanoramicCameraWidget(
-                    showGuide: true,
-                    controller: controller,
-                  ),
+              ),
+              Center(
+                child: Container(
+                  color: Colors.white,
+                  child: Text(
+                      "pitch: ${pitch.toStringAsFixed(2)}  roll: ${roll.toStringAsFixed(2)}  percentage: ${percentage.toStringAsFixed(2)}"),
                 ),
-              ],
-            ),
+              )
+            ],
           )),
     );
   }

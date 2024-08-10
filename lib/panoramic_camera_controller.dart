@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:panoramic_camera/constants.dart';
+import 'package:panoramic_camera/dto/indicators.dart';
 import 'package:panoramic_camera/panoramic_camera_interface.dart';
 
 class PanoramicCameraController {
@@ -24,6 +25,7 @@ class PanoramicCameraController {
     this.onDirectionUpdated,
     this.onCompassEvent,
     this.onShootingCompleted,
+    this.onShootingCanceled,
     this.onUpdateIndicators,
   });
 
@@ -68,6 +70,7 @@ class PanoramicCameraController {
   ValueChanged<int>? onDeviceVerticalityChanged;
   ValueChanged<double>? onDirectionUpdated;
   ValueChanged<Map<String, dynamic>>? onCompassEvent;
-  ValueChanged<Map<String, dynamic>>? onUpdateIndicators;
+  ValueChanged<Indicators>? onUpdateIndicators;
   ValueChanged<bool>? onShootingCompleted;
+  ValueChanged<bool>? onShootingCanceled;
 }
