@@ -2,15 +2,11 @@
 //  ShooterViewController.h
 //  engine_demo
 //
-// #ifndef ShooterViewController
-// #define ShooterViewController
 
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <Flutter/Flutter.h>
 
-// #define HD
-#define LITE
 #import "DMD.h"
 
 @interface ShooterViewController : UIViewController <MonitorDelegate>
@@ -22,5 +18,3 @@
 - (instancetype)initWithMethodChannel:(FlutterMethodChannel *)channel frame:(CGRect)frame;
 
 @end
-
-// #endif

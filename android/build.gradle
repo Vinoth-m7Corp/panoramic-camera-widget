@@ -73,11 +73,9 @@ android {
 dependencies {
     // FOR DEV ONLY
 //    implementation(name: 'flutter', ext:'jar')
+
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
-    // In many functionalities, the packageName is used to locate application resources. However, this approach did not initially support flavors. The library attempts to find resources in packageName.dev or packageName.stg, while resources are actually located in the main packageName. To resolve this, we modified a line in the library to strip out .dev and .stg from the packageName when searching for resources, ensuring it always refers to the main package.
-    implementation files('libs/c_pano_library.jar')
-    // In case an update to the library is released solving the problem, the original should be used:
-    // implementation files('libs/dmd_pano_library_2.jar')
+    implementation files('libs/dmd_pano_library_upgraded.jar')
 }
 

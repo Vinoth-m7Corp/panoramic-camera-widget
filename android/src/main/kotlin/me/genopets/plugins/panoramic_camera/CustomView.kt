@@ -94,14 +94,10 @@ class CustomView @JvmOverloads constructor(
         override fun stitchingCompleted(info: HashMap<String?, Any?>?) {
             val time = System.currentTimeMillis()
             val imgName = "img_$time.jpg"
-            
-            // Use getExternalFilesDir for better compatibility with scoped storage
-            val directory = context.getExternalFilesDir(null)
-            val folder = File(directory, folderName)
-            if (!folder.exists()) {
-                folder.mkdirs()
-            }
-            mEquiPath = File(folder, imgName).absolutePath
+
+            val cacheDir = context.externalCacheDir
+            mEquiPath = cacheDir?.absolutePath + "/" + folderName + "/" + imgName;
+
             mDMDCapture.genEquiAt(mEquiPath, 800, 0, 0, false, false)
             mainHandler.post { channel.invokeMethod("stitchingCompleted", info.toString()) }
         }
@@ -138,6 +134,8 @@ class CustomView @JvmOverloads constructor(
         override fun onStartedRotating() {}
 
         override fun onFinishedRotating() {}
+
+        override fun onShotsOriginalImagesReady(p0: Array<out String>?) {}
     }
 
     init {
@@ -178,6 +176,10 @@ class CustomView @JvmOverloads constructor(
      
     fun initDmdCapture() {
         try {
+            val cacheDir = context.externalCacheDir
+            val path = cacheDir?.absolutePath + "/" + folderName
+            val file = File(path);
+            file.mkdirs();
             mDMDCapture = DMD_Capture()
             // Do not remove the following line, the library will necessarily try to find the name of the application if it cannot find it, it will crash. Since this is a package, it does not have an application name, so one is being set.
             activity.applicationInfo.labelRes = R.string.app_name
@@ -238,7 +240,8 @@ class CustomView @JvmOverloads constructor(
 
     fun startShooting() {
         startTimer()
-        mPanoramaPath = Environment.getExternalStorageDirectory().toString() + "/Lib_Test/"
+        val cacheDir = context.externalCacheDir
+        mPanoramaPath = cacheDir?.absolutePath + "/Lib_Test/"
         mIsShootingStarted = mDMDCapture.startShooting(mPanoramaPath)
     }
 

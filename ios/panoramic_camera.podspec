@@ -17,8 +17,8 @@ A new Flutter plugin project.
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
   s.platform = :ios, '11.0'
-  s.vendored_libraries = 'Classes/libDMD_LITE.a'
-  s.frameworks = ['AVFoundation', 'CoreBluetooth', 'Photos', 'CoreLocation', 'CoreMotion', 'AssetsLibrary']
+  s.vendored_libraries = 'Classes/libDMD.a'
+  s.frameworks = ['AVFoundation', 'CoreBluetooth', 'MobileCoreServices', 'Accelerate', 'Photos', 'CoreLocation', 'CoreMotion', 'AssetsLibrary']
   s.xcconfig = {
     'CLANG_CXX_LIBRARY' => 'libc++',
     'CLANG_ENABLE_MODULES' => 'YES',

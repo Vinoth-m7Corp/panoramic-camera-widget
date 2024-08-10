@@ -170,8 +170,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     
     [[Monitor instance] setCircleDetectionCallback:lensDetectionCallback withObject:(__bridge void *)(self)];
     
-    // TODO: Check continuousMode functionality
-//    [sv setContinuousMode:self.continuousMode];
     sv.tag = TAG_CAMERAVIEW;
     
     [_channel invokeMethod:@"onCameraStarted" arguments:nil];
@@ -201,7 +199,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     
     [aView addSubview:sv];
 
-    // [self startPrintTimer];
     
     [self.view addSubview:aView];
     
@@ -224,7 +221,7 @@ UILabel *label = nil;
 - (void)dealloc
 {
     [self leaveShooter];
-    
+    [self stopPrintTimer];
     // Clean up any notifications or observers if necessary
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -335,28 +332,28 @@ UILabel *label = nil;
 
 - (void)start:(id)sender
 {
-    // [self startPrintTimer];
+    [self startPrintTimer];
     tookPhoto = NO;
     self.started = [[Monitor instance] startShooting];
 }
 
 - (void)restart:(id)sender
 {
-    // [self startPrintTimer];
     [[Monitor instance] setLens:[DMDLensSelector currentLensID]];
 	[[Monitor instance] restart];
+    [self startPrintTimer];
     self.started=false;
 }
 - (void)stop:(id)sender
 {
-    // [self stopPrintTimer];
+    [self stopPrintTimer];
 	[[Monitor instance] finishShooting];
     tookPhoto=NO;
     [_channel invokeMethod:@"finishShooting" arguments:nil];
 }
 - (void)leaveShooter
 {
-    // [self stopPrintTimer];
+    [self stopPrintTimer];
     [[Monitor instance] setDelegate:nil];
 	[[Monitor instance] stopShooting];
     [_channel invokeMethod:@"leaveShooter" arguments:nil];
@@ -470,7 +467,7 @@ UILabel *label = nil;
 }
 
 - (void)startPrintTimer {
-    self.timerInfo = [NSTimer scheduledTimerWithTimeInterval:0.1
+    self.timerInfo = [NSTimer scheduledTimerWithTimeInterval:0.25
                                                        target:self
                                                      selector:@selector(printIndicatorValues)
                                                      userInfo:nil
@@ -484,15 +481,7 @@ UILabel *label = nil;
 
 - (void)printIndicatorValues
 {
-    // getIndicators is not supported for the current plan, if it were supported this method should be called to be able to receive the percentage of progress
-	NSDictionary *ind = [[Monitor instance] getIndicators];
-	NSLog(@"%.2f    %.2f    %.2f    %@    %d",
-         [[ind objectForKey:@"roll"] doubleValue],
-         [[ind objectForKey:@"pitch"] doubleValue],
-         [[ind objectForKey:@"percentage"] doubleValue],
-         ([[ind objectForKey:@"orientation"] intValue]==-1?@"LTR":@"RTL"),// -1=LTR 1=RTL
-         [[ind objectForKey:@"fovx"] intValue]
-    );
+    NSDictionary *ind = [[Monitor instance] getIndicators];
     [_channel invokeMethod:@"onUpdateIndicators" arguments:ind];
 }
 

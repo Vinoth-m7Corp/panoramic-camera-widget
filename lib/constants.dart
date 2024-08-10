@@ -17,6 +17,7 @@ class PanoramicMethodNames {
   static const String onRotatorDisconnected = 'onRotatorDisconnected';
   static const String onStartedRotating = 'onStartedRotating';
   static const String onFinishedRotating = 'onFinishedRotating';
+  static const String onShootingCanceled = 'shootingCanceled';
   static const String onUpdateIndicators = 'onUpdateIndicators';
   static const String onResume = 'onResume';
   static const String onPause = 'onPause';

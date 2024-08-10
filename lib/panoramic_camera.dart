@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:panoramic_camera/constants.dart';
+import 'package:panoramic_camera/dto/indicators.dart';
 import 'package:panoramic_camera/panoramic_camera_controller.dart';
 import 'package:panoramic_camera/panoramic_camera_interface.dart';
 
@@ -122,9 +123,12 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
       case PanoramicMethodNames.onFinishedRotating:
         widget.controller.onFinishedRotating?.call();
         break;
+      case PanoramicMethodNames.onShootingCanceled:
+        widget.controller.onShootingCanceled?.call(call.arguments);
+        break;
       case PanoramicMethodNames.onUpdateIndicators:
         final args = Map<String, dynamic>.from(call.arguments as Map);
-        widget.controller.onUpdateIndicators?.call(args);
+        widget.controller.onUpdateIndicators?.call(Indicators.fromJson(args));
         break;
       default:
         throw MissingPluginException('not implemented');
