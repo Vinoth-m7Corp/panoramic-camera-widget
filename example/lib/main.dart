@@ -41,7 +41,9 @@ class _MyAppState extends State<MyApp> {
       onShootingCanceled: (bool value) {
         debugPrint('onShootingCanceled $value');
       },
-      onCameraStopped: () {},
+      onCameraStopped: () {
+        debugPrint('onCameraStopped');
+      },
       onDeviceVerticalityChanged: (int val) {
         isVertical = val;
         if (isVertical == 1) {
