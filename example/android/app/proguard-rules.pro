@@ -1,0 +1,2 @@
+-keep class com.nativesystem.** { *; }
+-keepclassmembers class com.nativesystem.** { *; }
