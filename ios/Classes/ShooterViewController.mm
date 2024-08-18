@@ -266,13 +266,11 @@ UILabel *label = nil;
 
 - (void)startShooting
 {
-    self.started=!self.started;
-    if(self.started)
-        [self start:nil];
-    else if(!tookPhoto)
-        [self restart:nil];
-    else
-        [self stop:nil];
+    if (self.started) {
+        NSLog(@"Panoramic Camera Plugin: Warning - The camera is already initialized");
+        return;
+    }
+    [self start:nil];
 }
 
 - (void)openLensSelector:(id)sender
@@ -448,6 +446,7 @@ UILabel *label = nil;
                     [self restart:nil];
                     
                     if (success) {
+                        [self stopPrintTimer];
                         [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
                     } else if (error) {
                         NSLog(@"Error saving photo: %@", error);

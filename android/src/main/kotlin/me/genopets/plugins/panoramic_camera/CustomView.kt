@@ -239,6 +239,9 @@ class CustomView @JvmOverloads constructor(
     }
 
     fun startShooting() {
+        if(mIsShootingStarted){
+            Log.w(TAG, "The camera is already initialized")
+        }
         startTimer()
         val cacheDir = context.externalCacheDir
         mPanoramaPath = cacheDir?.absolutePath + "/Lib_Test/"
