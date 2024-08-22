@@ -49,7 +49,6 @@ class CustomView @JvmOverloads constructor(
     private val mCallbackInterface: CallbackInterfaceShooter = object : CallbackInterfaceShooter {
         override fun onCameraStopped() {
             mIsShootingStarted = false
-            stopTimer()
             mainHandler.post { channel.invokeMethod("onCameraStopped", null) }
         }
 
@@ -121,6 +120,7 @@ class CustomView @JvmOverloads constructor(
 
         override fun onFinishGeneratingEqui() {
             mIsShootingStarted = false
+            stopTimer()
             mDMDCapture.startCamera(activity, logoSize, logoSize)
             mainHandler.post { channel.invokeMethod  ("onFinishGeneratingEqui", mEquiPath) }
         }
@@ -251,6 +251,7 @@ class CustomView @JvmOverloads constructor(
     fun finishShooting() {
         mDMDCapture.finishShooting()
         mIsShootingStarted = false
+        stopTimer()
     }
 
     fun onPause() {

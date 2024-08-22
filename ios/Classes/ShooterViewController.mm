@@ -54,6 +54,9 @@ UIView *aView=nil;
         if ([method isEqualToString:@"startShooting"]) {
             [weakSelf startShooting];
             result(nil);
+        } else if ([method isEqualToString:@"finishShooting"]) {
+            [weakSelf finishShooting];
+            result(nil);
         } else if ([method isEqualToString:@"onResume"]) {
             result(nil);
         } else if ([method isEqualToString:@"onPause"]) {
@@ -273,6 +276,11 @@ UILabel *label = nil;
     [self start:nil];
 }
 
+- (void)finishShooting
+{
+    [self stop:nil];
+}
+
 - (void)openLensSelector:(id)sender
 {
     DMDLensSelector *ls=[[DMDLensSelector alloc] initWithDelegate:self];
@@ -347,7 +355,7 @@ UILabel *label = nil;
     [self stopPrintTimer];
 	[[Monitor instance] finishShooting];
     tookPhoto=NO;
-    [_channel invokeMethod:@"finishShooting" arguments:nil];
+    self.started=false;
 }
 - (void)leaveShooter
 {
