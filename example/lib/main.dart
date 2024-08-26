@@ -1,9 +1,24 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:panoramic_camera/panoramic_camera.dart';
 import 'package:panoramic_camera/panoramic_camera_controller.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const AppWidget());
+}
+
+class AppWidget extends StatelessWidget {
+  const AppWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: Scaffold(
+        body: MyApp(),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -69,8 +84,25 @@ class _MyAppState extends State<MyApp> {
           roll = value.roll;
         });
       },
-      onFinishGeneratingEqui: (value) {
-        debugPrint("---------------Foto creada---------------");
+      onFinishGeneratingEqui: (path) async {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Generated Image"),
+              content: Container(
+                  width: 250, height: 250, child: Image.file(File(path))),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
       },
       onPhotoTaken: () {
         debugPrint("---------------onPhotoTaken---------------");
@@ -94,64 +126,63 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-          appBar: AppBar(
-            title: const Text('Plugin example app'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Plugin example app'),
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            child: const Icon(Icons.camera_alt),
+            onPressed: () {
+              isShootingStarted = true;
+              controller.startShooting();
+            },
           ),
-          floatingActionButton: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FloatingActionButton(
-                child: const Icon(Icons.camera_alt),
-                onPressed: () {
-                  isShootingStarted = true;
-                  controller.startShooting();
-                },
-              ),
-              FloatingActionButton(
-                child: const Icon(Icons.change_circle),
-                onPressed: () {
-                  setState(() {
-                    isHide = !isHide;
-                  });
-                },
-              ),
-            ],
+          FloatingActionButton(
+            child: const Icon(Icons.change_circle),
+            onPressed: () {
+              setState(() {
+                isHide = !isHide;
+              });
+            },
           ),
-          body: Stack(
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      helperText,
-                      style: const TextStyle(color: Colors.black),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                          border: Border.all(width: 2, color: Colors.yellow)),
-                      height: isHide ? 200 : 630,
-                      width: isHide ? 150 : 330,
-                      child: PanoramicCameraWidget(
-                        showGuide: true,
-                        controller: controller,
-                      ),
-                    ),
-                  ],
+        ],
+      ),
+      body: Stack(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  helperText,
+                  style: const TextStyle(color: Colors.black),
                 ),
-              ),
-              Center(
-                child: Container(
-                  color: Colors.white,
-                  child: Text(
-                      "pitch: ${pitch.toStringAsFixed(2)}  roll: ${roll.toStringAsFixed(2)}  percentage: ${percentage.toStringAsFixed(2)}"),
+                Container(
+                  decoration: BoxDecoration(
+                      border: Border.all(width: 2, color: Colors.yellow)),
+                  height: isHide ? 200 : 630,
+                  width: isHide ? 150 : 330,
+                  child: PanoramicCameraWidget(
+                    showGuide: true,
+                    controller: controller,
+                  ),
                 ),
-              )
-            ],
-          )),
+              ],
+            ),
+          ),
+          Center(
+            child: Container(
+              color: Colors.white,
+              child: Text(
+                  "pitch: ${pitch.toStringAsFixed(2)}  roll: ${roll.toStringAsFixed(2)}  percentage: ${percentage.toStringAsFixed(2)}"),
+            ),
+          )
+        ],
+      ),
     );
   }
 }
