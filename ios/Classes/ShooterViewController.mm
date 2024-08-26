@@ -447,20 +447,13 @@ UILabel *label = nil;
         NSData *imageData = [NSData dataWithContentsOfFile:equiPath];
         if (imageData) {
             UIImage *image = [UIImage imageWithData:imageData];
-            [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
-                PHAssetCreationRequest *creationRequest = [PHAssetCreationRequest creationRequestForAssetFromImage:image];
-            } completionHandler:^(BOOL success, NSError *error) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self restart:nil];
-                    
-                    if (success) {
-                        [self stopPrintTimer];
-                        [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
-                    } else if (error) {
-                        NSLog(@"Error saving photo: %@", error);
-                    }
-                });
-            }];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self restart:nil];
+                [self stopPrintTimer];
+                [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
+            });
+        } else {
+            NSLog(@"Error loading image data from path: %@", equiPath);
         }
     }
     
