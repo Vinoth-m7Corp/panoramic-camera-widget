@@ -236,6 +236,12 @@ UILabel *label = nil;
     [self startDMDSDKSafe];
 }
 
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewDidDisappear:animated];
+    [self leaveShooter];
+}
+
 
 
 - (void)rotatorToggle:(id)sender
