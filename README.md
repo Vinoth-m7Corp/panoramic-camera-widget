@@ -2,14 +2,32 @@
 
 The PanoramicCameraWidget is a customizable Flutter widget that integrates with native Android/iOS panoramic camera functionality using the DMD_Capture library. This widget provides a comprehensive interface for capturing panoramic photos with various event callbacks and configurable parameters.
 
+## Versioning
+For versioning, it's necessary to create a GitHub tag. After a branch is merged into the master, a tag should be created with the latest version from the pubspec.yaml. In the future, this process should be automated using GitHub Actions, but for now, we will handle it manually.
+
+Commands to create a tag:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+
 ## Getting Started
 
+### Use
+To use this library, since it is not published on pub.dev, you should reference it directly from this Git repository using the specific version tag.
+
+```yaml
+panoramic_camera:
+  git:
+    url: https://github.com/Genopets/panoramic-camera-widget
+    ref: v0.0.13
+```
+
 ### Installation on iOS
-It is necessary add the keys NSCameraUsageDescription and NSPhotoLibraryAddUsageDescription in the Info.plist file cause are required by iOS to inform the user why your app needs access to the camera and photo library.
+It is necessary add the keys NSCameraUsageDescription in the Info.plist file cause are required by iOS to inform the user why your app needs access to the library.
 
 	<key>NSCameraUsageDescription</key>
-		<string>App needs permission to use the camera in order to take a panoramic</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
 		<string>App needs permission to use the camera in order to take a panoramic</string>
 
 ### Constructor Parameters
