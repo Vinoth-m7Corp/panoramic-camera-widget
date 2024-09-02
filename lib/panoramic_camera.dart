@@ -157,36 +157,35 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        if (defaultTargetPlatform == TargetPlatform.iOS)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final height = constraints.maxHeight;
-              final width = constraints.maxWidth;
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final height = constraints.maxHeight;
+            final width = constraints.maxWidth;
 
-              // Check if the dimensions have changed
-              if (height != lastHeight || width != lastWidth) {
-                lastHeight = height;
-                lastWidth = width;
+            // Check if the dimensions have changed
+            if (height != lastHeight || width != lastWidth) {
+              lastHeight = height;
+              lastWidth = width;
 
-                platform.invokeMethod(PanoramicMethodNames.updateFrame, {
-                  'height': height,
-                  'width': width,
-                });
-              }
+              platform.invokeMethod(PanoramicMethodNames.updateFrame, {
+                'height': height,
+                'width': width,
+              });
+            }
 
-              return SizedBox(
-                height: height,
-                width: width,
-                child: UiKitView(
-                  viewType: 'panoramic_view',
-                  creationParams: {'height': height, 'width': width},
-                  creationParamsCodec: const StandardMessageCodec(),
-                ),
-              );
-            },
-          )
-        else
-          const AndroidView(viewType: 'panoramic_view'),
+            return SizedBox(
+              height: height,
+              width: width,
+              child: defaultTargetPlatform == TargetPlatform.iOS
+                  ? UiKitView(
+                      viewType: 'panoramic_view',
+                      creationParams: {'height': height, 'width': width},
+                      creationParamsCodec: const StandardMessageCodec(),
+                    )
+                  : const AndroidView(viewType: 'panoramic_view'),
+            );
+          },
+        ),
         if (isLoading)
           widget.loadingWidget ??
               Positioned.fill(
