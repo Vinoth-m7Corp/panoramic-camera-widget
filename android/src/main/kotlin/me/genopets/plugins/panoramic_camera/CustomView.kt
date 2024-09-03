@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
@@ -14,6 +15,7 @@ import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.RelativeLayout
+import android.widget.LinearLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.dermandar.dmd_lib.CallbackInterfaceShooter
@@ -184,6 +186,28 @@ class CustomView @JvmOverloads constructor(
             val displayRotation = getDisplayRotation(activity)
 
             viewGroup = mDMDCapture.initShooter(activity, mCallbackInterface, displayRotation, false, false)
+
+            viewGroup?.let { vg ->
+                // Get the first child of viewGroup, which is the FrameLayout containing CameraPreview2
+                val frameLayout = vg.getChildAt(0) as? FrameLayout
+            
+                // Ensure that frameLayout is not null before proceeding
+                frameLayout?.let {
+                    // Get the first child inside the FrameLayout, which is CameraPreview2
+                    val cameraPreview2 = it.getChildAt(0)
+            
+                    // Ensure that cameraPreview2 is not null before proceeding
+                    cameraPreview2?.let { view ->
+                        // Set the LayoutParams of CameraPreview2 to occupy the entire available space within FrameLayout
+                        val layoutParams = FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT
+                        )
+                        view.layoutParams = layoutParams
+                    }
+                }
+            }
+            
 
         } catch (e: java.lang.Exception){
             Log.e(TAG, e.printStackTrace().toString())

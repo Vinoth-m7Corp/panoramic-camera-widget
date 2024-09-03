@@ -21,7 +21,7 @@ To use this library, since it is not published on pub.dev, you should reference 
 panoramic_camera:
   git:
     url: https://github.com/Genopets/panoramic-camera-widget
-    ref: v0.0.13
+    ref: v0.0.14
 ```
 
 ### Installation on iOS
