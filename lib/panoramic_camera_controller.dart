@@ -49,6 +49,11 @@ class PanoramicCameraController {
     await _cameraControl?.invokeMethod(PanoramicMethodNames.startShooting);
   }
 
+  Future<void> stopShootingAndRestart() async {
+    await _cameraControl
+        ?.invokeMethod(PanoramicMethodNames.stopShootingAndRestart);
+  }
+
   Future<void> finishShooting() async {
     await _cameraControl?.invokeMethod(PanoramicMethodNames.finishShooting);
   }

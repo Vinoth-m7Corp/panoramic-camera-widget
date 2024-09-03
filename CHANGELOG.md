@@ -5,3 +5,7 @@
 ## 0.0.14
 
 * Fix full screen bug which caused the camera not to be displayed in full screen
+
+## 0.0.15
+
+* Add stop shooting and restart functionality

@@ -54,7 +54,11 @@ UIView *aView=nil;
         if ([method isEqualToString:@"startShooting"]) {
             [weakSelf startShooting];
             result(nil);
-        } else if ([method isEqualToString:@"finishShooting"]) {
+        } else if ([method isEqualToString:@"stopShootingAndRestart"]) {
+            [weakSelf stopShooting];
+            result(nil);
+        } 
+        else if ([method isEqualToString:@"finishShooting"]) {
             [weakSelf finishShooting];
             result(nil);
         } else if ([method isEqualToString:@"onResume"]) {
@@ -69,8 +73,10 @@ UIView *aView=nil;
             NSDictionary* args = call.arguments;
             CGFloat height = [args[@"height"] floatValue];
             CGFloat width = [args[@"width"] floatValue];
+            NSLog(@"Height1: %f, Width: %f", height, width);
+
             CGRect newFrame = CGRectMake(0, 0, width, height);
-            [weakSelf updateFrame:newFrame];
+            [self updateFrame:newFrame];
             result(nil);
         } else {
             result(FlutterMethodNotImplemented);
@@ -287,6 +293,14 @@ UILabel *label = nil;
     [self stop:nil];
 }
 
+- (void)stopShooting
+{
+    self.started = false;
+    [self stopPrintTimer];
+    [[Monitor instance] stopShooting];
+    [[Monitor instance] restart];
+}
+
 - (void)openLensSelector:(id)sender
 {
     DMDLensSelector *ls=[[DMDLensSelector alloc] initWithDelegate:self];
@@ -351,9 +365,7 @@ UILabel *label = nil;
 
 - (void)restart:(id)sender
 {
-    [[Monitor instance] setLens:[DMDLensSelector currentLensID]];
 	[[Monitor instance] restart];
-    [self startPrintTimer];
     self.started=false;
 }
 - (void)stop:(id)sender

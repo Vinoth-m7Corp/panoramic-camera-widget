@@ -31,6 +31,7 @@ import io.flutter.plugin.common.MethodChannel.Result
       override fun onMethodCall(call: MethodCall, result: Result) {
           when (call.method) {
               "startShooting" -> customView?.startShooting()
+              "stopShootingAndRestart" -> customView?.stopShooting()
               "finishShooting" -> customView?.finishShooting()
               "onResume" -> customView?.onResume()
               "onPause" -> customView?.onPause()

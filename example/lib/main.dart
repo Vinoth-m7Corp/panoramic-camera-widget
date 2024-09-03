@@ -134,6 +134,12 @@ class _MyAppState extends State<MyApp> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
+            child: const Icon(Icons.stop),
+            onPressed: () {
+              controller.stopShootingAndRestart();
+            },
+          ),
+          FloatingActionButton(
             child: const Icon(Icons.camera_alt),
             onPressed: () {
               isShootingStarted = true;
@@ -161,15 +167,18 @@ class _MyAppState extends State<MyApp> {
                 //   helperText,
                 //   style: const TextStyle(color: Colors.black),
                 // ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  decoration: BoxDecoration(
-                      border: Border.all(width: 1, color: Colors.yellow)),
-                  width: double.infinity,
-                  height: isHide ? 100 : 808,
-                  child: PanoramicCameraWidget(
-                    showGuide: true,
-                    controller: controller,
+                Expanded(
+                  flex: isHide ? 0 : 1,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    decoration: BoxDecoration(
+                        border: Border.all(width: 1, color: Colors.yellow)),
+                    width: double.infinity,
+                    height: 600,
+                    child: PanoramicCameraWidget(
+                      showGuide: true,
+                      controller: controller,
+                    ),
                   ),
                 ),
               ],

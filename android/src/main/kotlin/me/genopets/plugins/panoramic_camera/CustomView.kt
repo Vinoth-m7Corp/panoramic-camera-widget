@@ -275,6 +275,12 @@ class CustomView @JvmOverloads constructor(
         stopTimer()
     }
 
+    fun stopShooting() {
+        mDMDCapture.stopShooting()
+        mIsShootingStarted = false
+        stopTimer()
+    }
+
     fun onPause() {
         if (viewGroup?.parent != null) {
             mRelativeLayout.removeView(viewGroup)
