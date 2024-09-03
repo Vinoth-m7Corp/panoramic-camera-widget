@@ -127,9 +127,9 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Plugin example app'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Plugin example app'),
+      // ),
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -157,15 +157,16 @@ class _MyAppState extends State<MyApp> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  helperText,
-                  style: const TextStyle(color: Colors.black),
-                ),
-                Container(
+                // Text(
+                //   helperText,
+                //   style: const TextStyle(color: Colors.black),
+                // ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   decoration: BoxDecoration(
-                      border: Border.all(width: 2, color: Colors.yellow)),
-                  height: isHide ? 200 : 630,
-                  width: isHide ? 150 : 330,
+                      border: Border.all(width: 1, color: Colors.yellow)),
+                  width: double.infinity,
+                  height: isHide ? 100 : 808,
                   child: PanoramicCameraWidget(
                     showGuide: true,
                     controller: controller,
