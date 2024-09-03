@@ -22,6 +22,7 @@ class PanoramicMethodNames {
   static const String onResume = 'onResume';
   static const String onPause = 'onPause';
   static const String startShooting = 'startShooting';
+  static const String stopShootingAndRestart = 'stopShootingAndRestart';
   static const String finishShooting = 'finishShooting';
   static const String updateFrame = 'updateFrame';
 }

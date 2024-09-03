@@ -138,6 +138,7 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+
     widget.controller.detach();
     platform.setMethodCallHandler(null);
     super.dispose();
@@ -169,7 +170,7 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
                 lastWidth = width;
 
                 platform.invokeMethod(PanoramicMethodNames.updateFrame, {
-                  'height': height,
+                  'height': height - 5,
                   'width': width,
                 });
               }
