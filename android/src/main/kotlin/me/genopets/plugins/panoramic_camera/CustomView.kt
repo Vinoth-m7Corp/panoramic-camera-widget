@@ -95,12 +95,23 @@ class CustomView @JvmOverloads constructor(
         override fun stitchingCompleted(info: HashMap<String?, Any?>?) {
             val time = System.currentTimeMillis()
             val imgName = "img_$time.jpg"
-
             val cacheDir = context.externalCacheDir
-            mEquiPath = cacheDir?.absolutePath + "/" + folderName + "/" + imgName;
-
-            mDMDCapture.genEquiAt(mEquiPath, 800, 0, 0, false, false)
-            mainHandler.post { channel.invokeMethod("stitchingCompleted", info.toString()) }
+        
+            try {
+                mEquiPath = cacheDir?.absolutePath + "/" + folderName + "/" + imgName
+                // Generate the equi image at the specified path
+                mDMDCapture.genEquiAt(mEquiPath, 800, 0, 0, false, false)
+            } catch (e: Exception) {
+                // If there's an error, set mEquiPath to null
+                mEquiPath = null
+                e.printStackTrace() // Log the error for debugging
+            }
+        
+            // Use the handler to post the result back to the main thread
+            mainHandler.post {
+                // Notify Flutter that stitching is completed, you can pass info even if there was an error
+                channel.invokeMethod("stitchingCompleted", info.toString())
+            }
         }
 
         override fun shootingCompleted(finished: Boolean) {
@@ -276,7 +287,7 @@ class CustomView @JvmOverloads constructor(
     }
 
     fun stopShooting() {
-        mDMDCapture.stopShooting()
+        mDMDCapture.finishShooting()
         mIsShootingStarted = false
         stopTimer()
     }

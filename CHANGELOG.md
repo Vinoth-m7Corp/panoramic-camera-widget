@@ -9,3 +9,9 @@
 ## 0.0.15
 
 * Add stop shooting and restart functionality
+
+## 0.0.16
+
+* Refactor widget lifecycle handling on iOS
+* Error handling when accelerometer stops working
+* Error handling when image is not generated correctly

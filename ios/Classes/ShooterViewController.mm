@@ -22,6 +22,9 @@
     BOOL hideYinYang;
 }
 - (void)willEnterForeground:(NSNotification*)notification;
+- (void)didEnterBackground:(NSNotification *)notification;
+
+
 @property(nonatomic,assign)bool started;
 
 @property (retain) NSString *firstImagePath;
@@ -73,7 +76,6 @@ UIView *aView=nil;
             NSDictionary* args = call.arguments;
             CGFloat height = [args[@"height"] floatValue];
             CGFloat width = [args[@"width"] floatValue];
-            NSLog(@"Height1: %f, Width: %f", height, width);
 
             CGRect newFrame = CGRectMake(0, 0, width, height);
             [self updateFrame:newFrame];
@@ -97,9 +99,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 
 - (void)checkCameraPermissions
 {
-    [label setHidden:YES];
-    
-    [label setText:@"Camera access is required.\nPlease enable Camera access from\nSettings > Privacy > Camera"];
     
     AVAuthorizationStatus status = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
     if (status == AVAuthorizationStatusNotDetermined) {
@@ -183,15 +182,15 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     
     [_channel invokeMethod:@"onCameraStarted" arguments:nil];
     
-#ifdef HD
-    if ([sv canShootHD]) {
-        NSLog(@"Shooting in High Definition");
-        [sv setResolutionHD:nil];
-    } else {
-        NSLog(@"Shooting in Standard Definition");
-        [sv setResolutionSD:nil];
-    }
-#endif
+    #ifdef HD
+        if ([sv canShootHD]) {
+            NSLog(@"Shooting in High Definition");
+            [sv setResolutionHD:nil];
+        } else {
+            NSLog(@"Shooting in Standard Definition");
+            [sv setResolutionSD:nil];
+        }
+    #endif
     
     NSString *panoDir = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"originals"];
     [[NSFileManager defaultManager] removeItemAtPath:panoDir error:NULL];
@@ -199,12 +198,12 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     self.originalsFolderPath = panoDir;
     [sv setExportOriFolder:panoDir];    //nil for camera roll.
     
-#ifdef AMS_DEBUG
-    [sv setExportOriFolder:nil];
-    [sv setExportOriOn:nil];
-#else
-    [sv setExportOriOff:nil];
-#endif
+    #ifdef AMS_DEBUG
+        [sv setExportOriFolder:nil];
+        [sv setExportOriOn:nil];
+    #else
+        [sv setExportOriOff:nil];
+    #endif
     
     [aView addSubview:sv];
 
@@ -215,38 +214,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 }
 
 
-
-UILabel *label = nil;
-
-- (void)loadView
-{
-    CGRect frame = _initialFrame;
-    UIView *view = [[UIView alloc] initWithFrame:frame];
-    [view setBackgroundColor:[UIColor blackColor]];
-    self.view = view;
-}
-
-
-- (void)dealloc
-{
-    [self leaveShooter];
-    [self stopPrintTimer];
-    // Clean up any notifications or observers if necessary
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-}
-
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-    [self startDMDSDKSafe];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-    [super viewDidDisappear:animated];
-    [self leaveShooter];
-}
 
 
 
@@ -270,13 +237,6 @@ UILabel *label = nil;
 
 - (void)userTapped:(UITapGestureRecognizer*)tgr
 {
-    self.started=!self.started;
-    if(self.started)
-        [self start:nil];
-    else if(!tookPhoto)
-        [self restart:nil];
-    else
-        [self stop:nil];
 }
 
 - (void)startShooting
@@ -290,47 +250,23 @@ UILabel *label = nil;
 
 - (void)finishShooting
 {
-    [self stop:nil];
+    [self finish:nil];
 }
 
 - (void)stopShooting
 {
-    self.started = false;
-    [self stopPrintTimer];
-    [[Monitor instance] stopShooting];
-    [[Monitor instance] restart];
+    [self restart:nil];
 }
 
 - (void)openLensSelector:(id)sender
 {
-    DMDLensSelector *ls=[[DMDLensSelector alloc] initWithDelegate:self];
-    DMDNavigationControllerPortrait *nav=[[DMDNavigationControllerPortrait alloc] initWithRootViewController:ls];
-    nav.modalPresentationStyle = UIModalPresentationFullScreen;
-    [self presentViewController:nav animated:YES completion:^{
-        
-    }];
 }
 
 - (void)drawDefaultCircle
 {
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
-    [self.view viewWithTag:TAG_CAMERAVIEW].hidden = NO;
-    [self restart:nil];
-    
-    [self drawDefaultCircle];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(willEnterForeground:)
-                                                 name:UIApplicationWillEnterForegroundNotification object:nil];
-}
 
-- (void)viewDidDisappear:(BOOL)animated
-{
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
-}
 
 - (BOOL)shouldAutorotate
 {
@@ -349,38 +285,6 @@ UILabel *label = nil;
 - (NSUInteger)supportedInterfaceOrientations
 {
 	return UIInterfaceOrientationMaskPortrait;
-}
-
-- (void)willEnterForeground:(NSNotification*)notification
-{
-	[self restart:nil];
-}
-
-- (void)start:(id)sender
-{
-    [self startPrintTimer];
-    tookPhoto = NO;
-    self.started = [[Monitor instance] startShooting];
-}
-
-- (void)restart:(id)sender
-{
-	[[Monitor instance] restart];
-    self.started=false;
-}
-- (void)stop:(id)sender
-{
-    [self stopPrintTimer];
-	[[Monitor instance] finishShooting];
-    tookPhoto=NO;
-    self.started=false;
-}
-- (void)leaveShooter
-{
-    [self stopPrintTimer];
-    [[Monitor instance] setDelegate:nil];
-	[[Monitor instance] stopShooting];
-    [_channel invokeMethod:@"leaveShooter" arguments:nil];
 }
 
 - (void)preparingToShoot
@@ -459,23 +363,29 @@ UILabel *label = nil;
     unsigned char* logoData = [DMDUIImageToRGBA8888 uiImageToRGBA8888:[UIImage imageWithContentsOfFile:img]];
     [[Monitor instance] setLogo:logoData minZenith:0 minNadir:0];
     free(logoData), logoData = 0;
-    [[Monitor instance] genEquiAt:equiPath withHeight:ch andWidth:0 andMaxWidth:0 zenithLogo:true nadirLogo:true];
-    
-    @autoreleasepool {
-        NSData *imageData = [NSData dataWithContentsOfFile:equiPath];
-        if (imageData) {
-            UIImage *image = [UIImage imageWithData:imageData];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self restart:nil];
-                [self stopPrintTimer];
-                [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
-            });
-        } else {
-            NSLog(@"Error loading image data from path: %@", equiPath);
+
+    @try {
+        [[Monitor instance] genEquiAt:equiPath withHeight:ch andWidth:0 andMaxWidth:0 zenithLogo:true nadirLogo:true];
+        
+        @autoreleasepool {
+            NSData *imageData = [NSData dataWithContentsOfFile:equiPath];
+            if (imageData) {
+                UIImage *image = [UIImage imageWithData:imageData];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self restart:nil];
+                    [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
+                });
+            } else {
+                NSLog(@"Error loading image data from path: %@", equiPath);
+                [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:[NSNull null]];
+            }
         }
+    } @catch (NSException *exception) {
+        NSLog(@"Exception occurred: %@, %@", exception, [exception userInfo]);
+        [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:[NSNull null]];
+    } @finally {
+        [[self.view viewWithTag:TAG_ACTIVITYVIEW] removeFromSuperview];
     }
-    
-    [[self.view viewWithTag:TAG_ACTIVITYVIEW] removeFromSuperview];
     
 }
 
@@ -504,11 +414,6 @@ UILabel *label = nil;
 }
 
 - (void)onLensSelectionFinished {
-    
-    CGRect frame  = [[UIScreen mainScreen] bounds];
-    self.started=false;
-    [self restart:nil];
-    [self drawDefaultCircle];
     [_channel invokeMethod:@"onLensSelectionFinished" arguments:nil];
 }
 
@@ -541,6 +446,108 @@ CGRect calculateShooterViewFrame(CGRect frame) {
     const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
     CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
     return shooterViewFrame;
+}
+
+// This method is responsible for creating the view programmatically.
+- (void)loadView
+{
+    CGRect frame = _initialFrame;
+    UIView *view = [[UIView alloc] initWithFrame:frame];
+    [view setBackgroundColor:[UIColor blackColor]];
+    self.view = view;
+}
+
+// This method is called after the view has been loaded into memory.
+- (void)viewDidLoad
+{
+     NSLog(@"Pano Camera: viewDidLoad");
+    [super viewDidLoad];
+    [self startDMDSDKSafe];
+}
+
+// This method is called after the view has appeared on the screen.
+- (void)viewDidAppear:(BOOL)animated
+{
+    NSLog(@"Pano Camera: viewDidAppear");
+    [super viewDidAppear:animated];
+    [self restart:nil];
+
+        // Add observer to detect when the app enters background
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didEnterBackground:)
+                                                 name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(willEnterForeground:)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+}
+
+- (void)didEnterBackground:(NSNotification *)notification {
+    NSLog(@"Pano Camera: didEnterBackground");
+    [self stop:nil];
+}
+
+- (void)willEnterForeground:(NSNotification *)notification {
+     NSLog(@"Pano Camera: willEnterForeground");
+    if (self.isViewLoaded && self.view.window) {
+        [self restart:nil];
+    }
+}
+
+// This method is called just before the view disappears from the screen.
+- (void)viewWillDisappear:(BOOL)animated
+{
+    NSLog(@"Pano Camera: viewWillDisappear");
+    [super viewWillDisappear:animated];
+}
+
+// This method is called after the view has disappeared from the screen.
+- (void)viewDidDisappear:(BOOL)animated
+{
+    NSLog(@"Pano Camera: viewDidDisappear");
+    [super viewDidDisappear:animated];
+    [self stop:nil];
+    [[Monitor instance] setDelegate:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillEnterForegroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+// This method is called when the view controller is deallocated.
+- (void)dealloc
+{
+    NSLog(@"Pano Camera: dealloc");
+}
+
+- (void)start:(id)sender
+{
+    [self startPrintTimer];
+    tookPhoto = NO;
+    self.started = [[Monitor instance] startShooting];
+}
+
+- (void)restart:(id)sender
+{
+    [self stopPrintTimer];
+	[[Monitor instance] restart];
+    self.started=false;
+}
+- (void)stop:(id)sender
+{
+    [self stopPrintTimer];
+	[[Monitor instance] stopShooting];
+    tookPhoto=NO;
+    self.started=false;
+}
+
+- (void)finish:(id)sender
+{
+	[[Monitor instance] finishShooting];
+    [self stopPrintTimer];
+    tookPhoto=NO;
+    self.started=false;
 }
 
 @end
