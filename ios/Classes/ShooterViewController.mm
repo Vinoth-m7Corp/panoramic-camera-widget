@@ -363,23 +363,29 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     unsigned char* logoData = [DMDUIImageToRGBA8888 uiImageToRGBA8888:[UIImage imageWithContentsOfFile:img]];
     [[Monitor instance] setLogo:logoData minZenith:0 minNadir:0];
     free(logoData), logoData = 0;
-    [[Monitor instance] genEquiAt:equiPath withHeight:ch andWidth:0 andMaxWidth:0 zenithLogo:true nadirLogo:true];
-    
-    @autoreleasepool {
-        NSData *imageData = [NSData dataWithContentsOfFile:equiPath];
-        if (imageData) {
-            UIImage *image = [UIImage imageWithData:imageData];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self restart:nil];
-                [self stopPrintTimer];
-                [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
-            });
-        } else {
-            NSLog(@"Error loading image data from path: %@", equiPath);
+
+    @try {
+        [[Monitor instance] genEquiAt:equiPath withHeight:ch andWidth:0 andMaxWidth:0 zenithLogo:true nadirLogo:true];
+        
+        @autoreleasepool {
+            NSData *imageData = [NSData dataWithContentsOfFile:equiPath];
+            if (imageData) {
+                UIImage *image = [UIImage imageWithData:imageData];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self restart:nil];
+                    [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:equiPath];
+                });
+            } else {
+                NSLog(@"Error loading image data from path: %@", equiPath);
+                [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:[NSNull null]];
+            }
         }
+    } @catch (NSException *exception) {
+        NSLog(@"Exception occurred: %@, %@", exception, [exception userInfo]);
+        [self->_channel invokeMethod:@"onFinishGeneratingEqui" arguments:[NSNull null]];
+    } @finally {
+        [[self.view viewWithTag:TAG_ACTIVITYVIEW] removeFromSuperview];
     }
-    
-    [[self.view viewWithTag:TAG_ACTIVITYVIEW] removeFromSuperview];
     
 }
 
@@ -538,8 +544,8 @@ CGRect calculateShooterViewFrame(CGRect frame) {
 
 - (void)finish:(id)sender
 {
-    [self stopPrintTimer];
 	[[Monitor instance] finishShooting];
+    [self stopPrintTimer];
     tookPhoto=NO;
     self.started=false;
 }
