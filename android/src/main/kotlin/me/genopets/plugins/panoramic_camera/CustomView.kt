@@ -31,7 +31,7 @@ class CustomView @JvmOverloads constructor(
     private val channel: MethodChannel
 ) : FrameLayout(context, attrs, defStyleAttr) {
     private val TAG = "Panoramic Camera Plugin"
-    private var mEquiPath = ""
+    private var mEquiPath: String? = ""
     private val REQUEST_PERMISSIONS = 1234
     private lateinit var mRelativeLayout: RelativeLayout
     private var viewGroup: ViewGroup? = null
