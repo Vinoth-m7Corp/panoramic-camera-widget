@@ -276,7 +276,7 @@ class CustomView @JvmOverloads constructor(
     }
 
     fun stopShooting() {
-        mDMDCapture.stopShooting()
+        mDMDCapture.finishShooting()
         mIsShootingStarted = false
         stopTimer()
     }

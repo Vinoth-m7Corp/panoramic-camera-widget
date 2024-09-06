@@ -32,6 +32,7 @@ class _MyAppState extends State<MyApp> {
   String helperText = "Loading";
   int isVertical = 0;
   bool isShootingStarted = false;
+  bool isLive = true;
   int photos = 0;
   bool isHide = false;
   double pitch = 0.0;
@@ -154,41 +155,50 @@ class _MyAppState extends State<MyApp> {
               });
             },
           ),
+          FloatingActionButton(
+            child: const Icon(Icons.hide_image),
+            onPressed: () {
+              setState(() {
+                isLive = !isLive;
+              });
+            },
+          ),
         ],
       ),
       body: Stack(
         children: [
-          SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Text(
-                //   helperText,
-                //   style: const TextStyle(color: Colors.black),
-                // ),
-                Expanded(
-                  flex: isHide ? 0 : 1,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    decoration: BoxDecoration(
-                        border: Border.all(width: 1, color: Colors.yellow)),
-                    width: double.infinity,
-                    height: 600,
-                    child: PanoramicCameraWidget(
-                      showGuide: true,
-                      controller: controller,
+          if (isLive)
+            SizedBox(
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Text(
+                  //   helperText,
+                  //   style: const TextStyle(color: Colors.black),
+                  // ),
+                  Expanded(
+                    flex: isHide ? 0 : 1,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      decoration: BoxDecoration(
+                          border: Border.all(width: 1, color: Colors.yellow)),
+                      width: double.infinity,
+                      height: 600,
+                      child: PanoramicCameraWidget(
+                        showGuide: true,
+                        controller: controller,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           Center(
             child: Container(
               color: Colors.white,
               child: Text(
-                  "pitch: ${pitch.toStringAsFixed(2)}  roll: ${roll.toStringAsFixed(2)}  percentage: ${percentage.toStringAsFixed(2)}"),
+                  "isVertical: $isVertical pitch: ${pitch.toStringAsFixed(2)}  roll: ${roll.toStringAsFixed(2)}  percentage: ${percentage.toStringAsFixed(2)}"),
             ),
           )
         ],
