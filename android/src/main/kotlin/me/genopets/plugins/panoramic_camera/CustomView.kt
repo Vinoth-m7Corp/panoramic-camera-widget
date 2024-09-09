@@ -66,6 +66,7 @@ class CustomView @JvmOverloads constructor(
             mRelativeLayout.removeView(viewGroup);
             viewGroup = null;
             mDMDCapture.startCamera(activity, logoSize, logoSize)
+            startTimer()
             mainHandler.post { channel.invokeMethod("onFinishRelease", null) }
         }
 
@@ -135,6 +136,7 @@ class CustomView @JvmOverloads constructor(
             mIsShootingStarted = false
             stopTimer()
             mDMDCapture.startCamera(activity, logoSize, logoSize)
+            startTimer()
             mainHandler.post { channel.invokeMethod  ("onFinishGeneratingEqui", mEquiPath) }
         }
 
@@ -247,6 +249,7 @@ class CustomView @JvmOverloads constructor(
                 removeViewByIndex(viewGroup!!, 3)
             }
             mDMDCapture.startCamera(activity, logoSize, logoSize)
+            startTimer()
         } catch (e: Exception) {
             Log.e(TAG, "Error starting camera: ${e.message}")
         }
@@ -274,7 +277,6 @@ class CustomView @JvmOverloads constructor(
         if(mIsShootingStarted){
             Log.w(TAG, "The camera is already initialized")
         }
-        startTimer()
         val cacheDir = context.externalCacheDir
         mPanoramaPath = cacheDir?.absolutePath + "/Lib_Test/"
         mIsShootingStarted = mDMDCapture.startShooting(mPanoramaPath)
@@ -283,13 +285,11 @@ class CustomView @JvmOverloads constructor(
     fun finishShooting() {
         mDMDCapture.finishShooting()
         mIsShootingStarted = false
-        stopTimer()
     }
 
     fun stopShooting() {
-        mDMDCapture.finishShooting()
+        mDMDCapture.stopShooting()
         mIsShootingStarted = false
-        stopTimer()
     }
 
     fun onPause() {
@@ -302,6 +302,7 @@ class CustomView @JvmOverloads constructor(
         }
         mDMDCapture.releaseShooter()
         mDMDCapture.stopCamera()
+        stopTimer()
     }
 
     fun setOutputHeight(height: Int) {

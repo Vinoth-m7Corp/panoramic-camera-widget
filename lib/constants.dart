@@ -26,3 +26,7 @@ class PanoramicMethodNames {
   static const String finishShooting = 'finishShooting';
   static const String updateFrame = 'updateFrame';
 }
+
+class PanoramicConstants {
+  static const sensorAcceptableRange = 0.15;
+}

@@ -319,6 +319,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
         av.center = self.view.center;
         [self.view addSubview:av];
     }
+    [self stopPrintTimer];
     [_channel invokeMethod:@"shootingCompleted" arguments:nil];
 }
 
@@ -523,14 +524,13 @@ CGRect calculateShooterViewFrame(CGRect frame) {
 
 - (void)start:(id)sender
 {
-    [self startPrintTimer];
     tookPhoto = NO;
     self.started = [[Monitor instance] startShooting];
 }
 
 - (void)restart:(id)sender
 {
-    [self stopPrintTimer];
+    [self startPrintTimer];
 	[[Monitor instance] restart];
     self.started=false;
 }
@@ -544,8 +544,8 @@ CGRect calculateShooterViewFrame(CGRect frame) {
 
 - (void)finish:(id)sender
 {
-	[[Monitor instance] finishShooting];
     [self stopPrintTimer];
+	[[Monitor instance] finishShooting];
     tookPhoto=NO;
     self.started=false;
 }
