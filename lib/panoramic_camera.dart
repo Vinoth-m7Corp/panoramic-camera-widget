@@ -168,9 +168,8 @@ class _PanoramicCameraWidgetState extends State<PanoramicCameraWidget>
               if (height != lastHeight || width != lastWidth) {
                 lastHeight = height;
                 lastWidth = width;
-
                 platform.invokeMethod(PanoramicMethodNames.updateFrame, {
-                  'height': height - 5,
+                  'height': height,
                   'width': width,
                 });
               }

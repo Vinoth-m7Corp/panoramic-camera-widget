@@ -19,3 +19,7 @@
 ## 0.0.17
 
 * Send indicators whenever the camera is active
+
+## 0.0.18
+
+* Fix camera resizing on iOS

@@ -32,7 +32,7 @@ class _MyAppState extends State<MyApp> {
   String helperText = "Loading";
   int isVertical = 0;
   bool isShootingStarted = false;
-  bool isLive = true;
+  bool isExpanded = false;
   int photos = 0;
   bool isHide = false;
   double pitch = 0.0;
@@ -91,7 +91,7 @@ class _MyAppState extends State<MyApp> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text("Generated Image"),
-              content: Container(
+              content: SizedBox(
                   width: 250, height: 250, child: Image.file(File(path))),
               actions: <Widget>[
                 TextButton(
@@ -159,7 +159,7 @@ class _MyAppState extends State<MyApp> {
             child: const Icon(Icons.hide_image),
             onPressed: () {
               setState(() {
-                isLive = !isLive;
+                isExpanded = !isExpanded;
               });
             },
           ),
@@ -167,33 +167,20 @@ class _MyAppState extends State<MyApp> {
       ),
       body: Stack(
         children: [
-          if (isLive)
-            SizedBox(
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Text(
-                  //   helperText,
-                  //   style: const TextStyle(color: Colors.black),
-                  // ),
-                  Expanded(
-                    flex: isHide ? 0 : 1,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      decoration: BoxDecoration(
-                          border: Border.all(width: 1, color: Colors.yellow)),
-                      width: double.infinity,
-                      height: 600,
-                      child: PanoramicCameraWidget(
-                        showGuide: true,
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-                ],
+          Container(
+            // duration: const Duration(milliseconds: 300),
+            decoration: BoxDecoration(
+                border: Border.all(width: 1, color: Colors.yellow)),
+            width: double.infinity,
+            height: isExpanded ? 600 : 200,
+            child: PanoramicCameraWidget(
+              showGuide: false,
+              controller: controller,
+              loadingWidget: const Center(
+                child: CircularProgressIndicator(),
               ),
             ),
+          ),
           Center(
             child: Container(
               color: Colors.white,

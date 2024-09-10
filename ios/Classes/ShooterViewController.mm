@@ -90,13 +90,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 {
 }
 
-- (void)updateFrame:(CGRect)newFrame {
-    _initialFrame = newFrame;
-    CGRect frame = _initialFrame;
-    sv.frame = calculateShooterViewFrame(frame);
-    aView.frame = frame;
-}
-
 - (void)checkCameraPermissions
 {
     
@@ -150,38 +143,44 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 
 - (void)startDMDSDK
 {
+    // Clear previous references
     sv = nil;
     self.timerInfo = nil;
     aView = nil;
-    
+
+    // Initialize the frame with _initialFrame
     CGRect frame = _initialFrame;
     aView = [[UIView alloc] initWithFrame:frame];
-    aView.backgroundColor = [UIColor blackColor];
-    
+    aView.backgroundColor = [UIColor blackColor]; // Main view background set to black
+
     self.started = false;
-    
+
     tookPhoto = NO;
-    [Monitor instance].delegate = self;
-    
-    // The yin yang height size depends on the device screen width
+    [Monitor instance].delegate = self; // Assign delegate
+
+    // Calculate the circle size based on the device screen width
     const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
+    CGRect shooterViewFrame = calculateShooterViewFrame(frame); // Calculate the ShooterView frame
 
-    CGRect shooterViewFrame = calculateShooterViewFrame(frame);
-
+    // Initialize ShooterView with the calculated frame
     sv = [[ShooterView alloc] initWithFrame:shooterViewFrame andYinYang:YES andCameraControls:NO];
-    
+
+    // Create and configure a mask for the ShooterView
     CGRect maskFrame = CGRectMake(0, yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame));
     UIView *maskView = [[UIView alloc] initWithFrame:maskFrame];
     maskView.backgroundColor = [UIColor blackColor];
 
-    sv.layer.mask = maskView.layer;
-    
+    sv.layer.mask = maskView.layer; // Apply the mask
+
+    // Set the callback for circle detection
     [[Monitor instance] setCircleDetectionCallback:lensDetectionCallback withObject:(__bridge void *)(self)];
-    
-    sv.tag = TAG_CAMERAVIEW;
-    
+
+    sv.tag = TAG_CAMERAVIEW; // Tag for identification
+
+    // Notify Flutter that the camera has started
     [_channel invokeMethod:@"onCameraStarted" arguments:nil];
-    
+
+    // Camera resolution configuration
     #ifdef HD
         if ([sv canShootHD]) {
             NSLog(@"Shooting in High Definition");
@@ -191,30 +190,58 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
             [sv setResolutionSD:nil];
         }
     #endif
-    
+
+    // Create and configure the export folder for images
     NSString *panoDir = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"originals"];
     [[NSFileManager defaultManager] removeItemAtPath:panoDir error:NULL];
     [[NSFileManager defaultManager] createDirectoryAtPath:panoDir withIntermediateDirectories:YES attributes:nil error:NULL];
     self.originalsFolderPath = panoDir;
-    [sv setExportOriFolder:panoDir];    //nil for camera roll.
-    
+    [sv setExportOriFolder:panoDir];    //nil to not save to camera roll.
+
+    // Additional configuration based on the build environment
     #ifdef AMS_DEBUG
         [sv setExportOriFolder:nil];
         [sv setExportOriOn:nil];
     #else
         [sv setExportOriOff:nil];
     #endif
-    
+
+    // Add ShooterView to the main view
     [aView addSubview:sv];
 
-    
-    [self.view addSubview:aView];
-    
-    [self drawDefaultCircle];
+
+    [self.view addSubview:aView]; // Add main view to the controller's view
+
+    [self drawDefaultCircle]; // Draw a default circle (possibly an overlay)
 }
 
+- (void)updateFrame:(CGRect)newFrame {
+    // Update the initial frame with the new value
+    _initialFrame = newFrame;
+    
+    // Calculate the new frame for ShooterView
+    CGRect frame = calculateShooterViewFrame(_initialFrame);
+    sv.frame = frame; // Update sv's frame
+    // Adjust the mask to fit the new frame
+    const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
+    CGRect maskFrame = CGRectMake(0, yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame));
+    UIView *maskView = [[UIView alloc] initWithFrame:maskFrame];
+    maskView.backgroundColor = [UIColor blackColor];
+    sv.layer.mask = maskView.layer; // Reapply the mask with the updated frame
 
+    // Update the frame for aView
+    aView.frame = newFrame;
+}
 
+CGRect calculateShooterViewFrame(CGRect frame) {
+    // The yin yang size depends on the device screen width
+    const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
+    
+    // Calculate the ShooterView frame adjusting for the yin yang size
+    CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
+    
+    return shooterViewFrame; // Return the new frame
+}
 
 
 - (void)rotatorToggle:(id)sender
@@ -442,12 +469,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     [_channel invokeMethod:@"rotatorFinishedRotating" arguments:nil];
 }
 
-CGRect calculateShooterViewFrame(CGRect frame) {
-    // The yin yang height size depends on the device screen width
-    const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
-    CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
-    return shooterViewFrame;
-}
 
 // This method is responsible for creating the view programmatically.
 - (void)loadView
