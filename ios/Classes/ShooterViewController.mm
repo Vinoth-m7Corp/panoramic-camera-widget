@@ -224,7 +224,7 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
     sv.frame = frame; // Update sv's frame
     // Adjust the mask to fit the new frame
     const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
-    CGRect maskFrame = CGRectMake(0, yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame));
+    CGRect maskFrame = CGRectMake(0, 0, CGRectGetWidth(frame), CGRectGetHeight(frame));
     UIView *maskView = [[UIView alloc] initWithFrame:maskFrame];
     maskView.backgroundColor = [UIColor blackColor];
     sv.layer.mask = maskView.layer; // Reapply the mask with the updated frame
@@ -238,7 +238,7 @@ CGRect calculateShooterViewFrame(CGRect frame) {
     const int yinYangSize = CGRectGetWidth(frame) * 0.4814;
     
     // Calculate the ShooterView frame adjusting for the yin yang size
-    CGRect shooterViewFrame = CGRectMake(0, -yinYangSize, CGRectGetWidth(frame), CGRectGetHeight(frame) + yinYangSize);
+    CGRect shooterViewFrame = CGRectMake(0, 0, CGRectGetWidth(frame), CGRectGetHeight(frame));
     
     return shooterViewFrame; // Return the new frame
 }
