@@ -6,7 +6,6 @@
 #import "DMDNavigationControllerPortrait.h"
 #import "DMDLensSelector.h"
 #import <AVFoundation/AVFoundation.h>
-#import <CoreBluetooth/CoreBluetooth.h>
 #import "DMDUIImageToRGBA8888.h"
 #import <Photos/Photos.h>
 
@@ -16,7 +15,7 @@
 #define TAG_CAMERAVIEW 11
 #define TAG_ACTIVITYVIEW 12
 
-@interface ShooterViewController () <DMDLensSelectionDelegate, CBCentralManagerDelegate>
+@interface ShooterViewController () <DMDLensSelectionDelegate>
 {
     BOOL tookPhoto;
     BOOL hideYinYang;
@@ -131,9 +130,6 @@ void lensDetectionCallback(enum DMDCircleDetectionResult res, void* obj)
 }
 
 
-- (void)centralManagerDidUpdateState:(CBCentralManager *)central
-{
-}
 
 
 -(void) startDMDSDKSafe
