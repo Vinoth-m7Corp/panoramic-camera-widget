@@ -21,7 +21,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   integration_test: ce0a3ffa1de96d1a89ca0ac26fca7ea18a749ef4
-  panoramic_camera: 1df0be2b63526446de8606c68f222107ab2112cf
+  panoramic_camera: 38af93fe60591b174c16479e5b15336fa72b38ed
 
 PODFILE CHECKSUM: 6e700dec67e6deac9b1c69bb14c49a2217a12d15
 
