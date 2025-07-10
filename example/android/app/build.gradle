@@ -24,30 +24,29 @@ if (flutterVersionName == null) {
 
 android {
     namespace "me.genopets.mobile"
-    compileSdk flutter.compileSdkVersion
+    compileSdk 35 // ✅ explicitly set to 34
+
     ndkVersion flutter.ndkVersion
 
+    defaultConfig {
+        applicationId "me.genopets.mobile"
+        minSdkVersion 21 // or higher depending on your use case
+        targetSdkVersion 35 // ✅ explicitly target 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_21 // ✅ Java 21 support
+        targetCompatibility JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '21' // ✅ Java 21 support for Kotlin
     }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
-    }
-
-    defaultConfig {
-        applicationId "me.genopets.mobile"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion flutter.targetSdkVersion
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
     }
 
     buildTypes {
@@ -55,8 +54,6 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
         }
     }
@@ -66,4 +63,6 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    // no additional dependencies required here for now
+}
